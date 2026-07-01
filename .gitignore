@@ -1,0 +1,28 @@
+# ワークスペース設定を除外
+*.code-workspace
+.vscode/
+
+# ノートブックを除外
+**/_note/
+*.one
+*.onetoc2
+*.onepkg
+
+# サンプルコードを除外
+**/_sample/
+
+# その他のの不要ファイルを除外
+.DS_Store
+Thumbs.db
+node_modules/
+.npm/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
