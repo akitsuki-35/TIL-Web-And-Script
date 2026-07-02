@@ -11,7 +11,7 @@
 # サンプルコードを除外
 **/_sample/
 
-# その他のの不要ファイルを除外
+# その他の不要ファイルを除外
 .DS_Store
 Thumbs.db
 node_modules/
@@ -26,3 +26,4 @@ venv/
 .venv/
 pip-log.txt
 pip-delete-this-directory.txt
+desktop.ini
