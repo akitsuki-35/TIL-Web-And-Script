@@ -1,7 +1,7 @@
 #===========================================================
     # file    : MayaRename.py
-    # brief   : ƒŠƒl[ƒ€ƒc[ƒ‹
-    # author  : @akitsuki-35ihttps://github.com/akitsuki-35j
+    # brief   : ãƒªãƒãƒ¼ãƒ ãƒ„ãƒ¼ãƒ«
+    # author  : @akitsuki-35ï¼ˆhttps://github.com/akitsuki-35ï¼‰
     # date    : 2026/06/17
     # updated : 2026/06/24
 #===========================================================
@@ -11,47 +11,47 @@ if cmds.window("Sample_Window", exists=True):
 window = cmds.window("Sample_Window", title="Rename Tool", widthHeight=(700, 700))
 
 # ====================
-# ŠÖ”’è‹`
+# ï¿½Öï¿½ï¿½ï¿½`
 # ====================
 # --------------------
-# ƒŠƒl[ƒ€Às
+# ï¿½ï¿½ï¿½lï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½s
 # --------------------
 def Rename():
-    # •¶š—ñ‚Ì’u‚«Š·‚¦
+    # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì’uï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     replaceOld = cmds.textField("textfieldReplaceOld", query=True, text=True)
     replaceNew = cmds.textField("textfieldReplaceNew", query=True, text=True)
     
-    # æ“ª‚É’Ç‰Á‚·‚é•¶š—ñ
+    # ï¿½æ“ªï¿½É’Ç‰ï¿½ï¿½ï¿½ï¿½é•¶ï¿½ï¿½ï¿½ï¿½
     prefix = cmds.textField("textfieldPrefix", query=True, text=True)
     
-    # ––”ö‚É’Ç‰Á‚·‚é•¶š—ñ
+    # ï¿½ï¿½ï¿½ï¿½ï¿½É’Ç‰ï¿½ï¿½ï¿½ï¿½é•¶ï¿½ï¿½ï¿½ï¿½
     suffix = cmds.textField("textfieldSuffix", query=True, text=True)
     
-    # ŒŸõ‚·‚é•¶š—ñ
+    # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½é•¶ï¿½ï¿½ï¿½ï¿½
     search = cmds.textField("textfieldSearch", query=True, text=True)
     
-    # –¼‘O•ÏX
+    # ï¿½ï¿½ï¿½Oï¿½ÏX
     select = cmds.ls(sl=True)
     for sel in select:
         newName = prefix +  sel.replace(replaceOld, replaceNew)
         cmds.rename(sel, newName + suffix) 
         
-    # •¶š—ñŒŸõ
+    # ï¿½ï¿½ï¿½ï¿½ï¿½ñŒŸï¿½
         if search:
-            print("----------•¶š—ñŒŸõŒ‹‰Ê[[[[[[[[[[")
+            print("----------ï¿½ï¿½ï¿½ï¿½ï¿½ñŒŸï¿½ï¿½ï¿½ï¿½Ê[ï¿½[ï¿½[ï¿½[ï¿½[ï¿½[ï¿½[ï¿½[ï¿½[ï¿½[")
             for sel in select:
                 if search in sel:
                     print(sel)
 
 # --------------------
-# ”Ô†•t‚¯
+# ï¿½Ôï¿½ï¿½tï¿½ï¿½
 # --------------------
 def Number():
 
-    # ‘I‘ğ’†ƒIƒuƒWƒFƒNƒgæ“¾
+    # ï¿½Iï¿½ğ’†ƒIï¿½uï¿½Wï¿½Fï¿½Nï¿½gï¿½æ“¾
     selectList = cmds.ls(sl=True)
 
-    # Å‰‚É‘I‘ğ‚µ‚½ƒIƒuƒWƒFƒNƒg‚Ì–¼‘O‚ğæ‚èo‚·
+    # ï¿½Åï¿½ï¿½É‘Iï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Iï¿½uï¿½Wï¿½Fï¿½Nï¿½gï¿½Ì–ï¿½ï¿½Oï¿½ï¿½ï¿½ï¿½ï¿½oï¿½ï¿½
     baseName = selectList[0]
 
     num = 1
@@ -62,26 +62,26 @@ def Number():
         num += 1
 
 # ====================
-# UI•”•ª
+# UIï¿½ï¿½ï¿½ï¿½
 # ====================
 
 # --------------------
-# Àsƒ{ƒ^ƒ“
+# ï¿½ï¿½ï¿½sï¿½{ï¿½^ï¿½ï¿½
 # --------------------
 
 cmds.columnLayout("columnExecution", adjustableColumn=True)
 
-cmds.text("textRename", label="ƒŠƒl[ƒ€ ƒc[ƒ‹", h=50)
+cmds.text("textRename", label="ï¿½ï¿½ï¿½lï¿½[ï¿½ï¿½ ï¿½cï¿½[ï¿½ï¿½", h=50)
 
-cmds.button("buttonExecution", label="ƒŠƒl[ƒ€Às", command=lambda *args:Rename(), h=50)
+cmds.button("buttonExecution", label="ï¿½ï¿½ï¿½lï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½s", command=lambda *args:Rename(), h=50)
 
 cmds.separator(height=20)
 
 # --------------------
-# ‘‚«Š·‚¦
+# ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 # --------------------
 
-cmds.text("textReplace", label="‘‚«Š·‚¦", h=30)
+cmds.text("textReplace", label="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½", h=30)
 
 cmds.setParent("..")
 
@@ -94,12 +94,12 @@ cmds.separator(height=20)
 cmds.setParent("..")
 
 # --------------------
-# “ª‚É•¶š—ñ’Ç‰Á
+# ï¿½ï¿½ï¿½É•ï¿½ï¿½ï¿½ï¿½ï¿½Ç‰ï¿½
 # --------------------
 cmds.columnLayout("columnPrefix", adjustableColumn=True)
 
 cmds.separator(height=20)
-cmds.text("textPrefix", label="æ“ª‚É•¶š—ñ’Ç‰Á", h=30)
+cmds.text("textPrefix", label="ï¿½æ“ªï¿½É•ï¿½ï¿½ï¿½ï¿½ï¿½Ç‰ï¿½", h=30)
 
 cmds.textField("textfieldPrefix", text="", w=200)
 
@@ -107,12 +107,12 @@ cmds.separator(height=20)
 cmds.setParent("..")
 
 # --------------------
-# ––”ö‚É•¶š—ñ’Ç‰Á
+# ï¿½ï¿½ï¿½ï¿½ï¿½É•ï¿½ï¿½ï¿½ï¿½ï¿½Ç‰ï¿½
 # --------------------
 cmds.columnLayout("columnSuffix", adjustableColumn=True)
 
 cmds.separator(height=20)
-cmds.text("textSuffix", label="––”ö‚É•¶š—ñ’Ç‰Á", h=30)
+cmds.text("textSuffix", label="ï¿½ï¿½ï¿½ï¿½ï¿½É•ï¿½ï¿½ï¿½ï¿½ï¿½Ç‰ï¿½", h=30)
 
 cmds.textField("textfieldSuffix", text="", w=200)
 
@@ -120,12 +120,12 @@ cmds.separator(height=20)
 cmds.setParent("..")
 
 # --------------------
-# •¶š—ñŒŸõ
+# ï¿½ï¿½ï¿½ï¿½ï¿½ñŒŸï¿½
 # --------------------
 cmds.columnLayout("columnSearch", adjustableColumn=True)
 
 cmds.separator(height=20)
-cmds.text("textSearch", label="•¶š—ñŒŸõ", h=30)
+cmds.text("textSearch", label="ï¿½ï¿½ï¿½ï¿½ï¿½ñŒŸï¿½", h=30)
 
 cmds.textField("textfieldSearch", text="", w=200)
 
@@ -133,17 +133,17 @@ cmds.separator(height=20)
 cmds.setParent("..")
 
 # --------------------
-# ”Ô†•t‚¯
+# ï¿½Ôï¿½ï¿½tï¿½ï¿½
 # --------------------
 cmds.columnLayout("columnNumber", adjustableColumn=True)
 
-cmds.button("buttonNumber", label="”Ô†•t‚¯", command=lambda *args:Number())
+cmds.button("buttonNumber", label="ï¿½Ôï¿½ï¿½tï¿½ï¿½", command=lambda *args:Number())
 
 cmds.setParent("..")
 
 # --------------------
-# I—¹
+# ï¿½Iï¿½ï¿½
 # --------------------
 
-cmds.setParent("..")# ƒŒƒCƒAƒEƒgI—¹
+cmds.setParent("..")# ï¿½ï¿½ï¿½Cï¿½Aï¿½Eï¿½gï¿½Iï¿½ï¿½
 cmds.showWindow(window)
