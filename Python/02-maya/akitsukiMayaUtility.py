@@ -7,7 +7,10 @@
 #===========================================================
 import maya.cmds as cmds
 
-def mirrorTool():
+# --------------------
+# 移動・回転・縮小をミラー適用
+# --------------------
+def mirror():
     # 選択オブジェクト取得
     sel = cmds.ls(sl=True)
     
@@ -107,7 +110,48 @@ def mirrorTool():
         cmds.setAttr(f"{mirObject}.scale", -newScale[0], -newScale[1], -newScale[2])
         
         addLog("success:拡大縮小処理が正常に完了しました")
+        
+# --------------------
+# 対称位置に複製
+# --------------------
+def objectDuplicate():
+     # 選択オブジェクト取得
+    sel = cmds.ls(sl=True)
+    
+    if not sel:
+        addLog("error:オブジェクトが選択されていません")
+        return
+        
+    # 変形適用軸取得
+    mirrorAxis = cmds.checkBoxGrp("axis", query=True, valueArray3=True)
+        
+    for s in sel:
+        pos = cmds.getAttr(f"{s}.translate")[0]
+        newPos = list(pos)
 
+        if not any(pos):
+            addLog("warning:オブジェクトの移動値が0です 同じ位置に複製されます")
+        elif not any(mirrorAxis):
+            addLog("error:適用軸が指定されていません")
+            return
+        
+        # X軸
+        if mirrorAxis[0]:
+            newPos[0] = -pos[0]
+        # Y軸
+        if mirrorAxis[1]:
+            newPos[1] = -pos[1]
+        # Z軸
+        if mirrorAxis[2]:
+            newPos[2] = -pos[2]
+            
+        newObj = cmds.duplicate(s, returnRootsOnly=True)
+        cmds.setAttr(f"{newObj[0]}.translate", *newPos)
+        addLog("success:複製が正常に完了しました")
+        
+# --------------------
+# 対称オブジェクト取得
+# --------------------
 def getMirrorObject():
     sel = cmds.ls(sl=True)
     if not sel:
@@ -132,6 +176,9 @@ def getMirrorObject():
     else:
         return 0, 0
 
+# --------------------
+# ログ出力
+# --------------------
 def addLog(newText):
     text = cmds.scrollField("log", query=True, text=True)
     
@@ -142,6 +189,12 @@ def addLog(newText):
     
     cmds.scrollField("log", edit=True, text=updatedText)
     cmds.scrollField("log", edit=True, insertionPosition=len(updatedText))
+
+# --------------------
+# ログをクリア
+# --------------------
+def logClear():
+    cmds.scrollField("log", edit=True, text="")
 
 # --------------------
 # ウィンドウ定義
@@ -183,16 +236,21 @@ cmds.separator(h=5)
 
 # 変形適用量指定
 cmds.text("valueText", label="　変形を適用する量を指定", h=30, align='left')
-cmds.floatSliderGrp("valueSlider", label="Value", field=True, minValue=-1000, maxValue=1000, value=0.1)
-cmds.separator(h=5)
+cmds.floatSliderGrp("valueSlider", label="Value", field=True, minValue=-100, maxValue=100, value=0.1)
+cmds.separator(h=30)
 
 # 適用
-cmds.button("mirrorButton", label="適用", h=50, command=lambda *args:mirrorTool())
-cmds.separator(h=15)
+cmds.button("mirrorButton", label="適用", h=50, command=lambda *args:mirror())
+cmds.separator(h=10)
+
+# 複製
+cmds.button("duplicateButton", label="選択オブジェクトを対称位置に複製", h=50, command=lambda *args:objectDuplicate())
+cmds.separator(h=30)
 
 # ログ
 cmds.text("logText", label="　ログ", h=30, align='left')
 cmds.scrollField("log", text="", h=100, editable=False)
+cmds.button("logClearButton", label="ログをクリア", h=25, command=lambda *args:logClear())
 
 # レイアウトから出る
 cmds.setParent("..")
