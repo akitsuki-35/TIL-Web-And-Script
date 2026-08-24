@@ -1,9 +1,9 @@
 #===========================================================
-    # file    : MayaRename.py
-    # brief   : リネームツール
-    # author  : @akitsuki-35（https://github.com/akitsuki-35）
-    # date    : 2026/06/17
-    # updated : 2026/06/24
+# file    : MayaRename.py
+# brief   : リネームツール
+# author  : @akitsuki-35（https://github.com/akitsuki-35）
+# date    : 2026/06/17
+# updated : 2026/06/24
 #===========================================================
 import maya.cmds as cmds
 if cmds.window("Sample_Window", exists=True):
@@ -11,47 +11,47 @@ if cmds.window("Sample_Window", exists=True):
 window = cmds.window("Sample_Window", title="Rename Tool", widthHeight=(700, 700))
 
 # ====================
-# �֐���`
+# 関数定義
 # ====================
 # --------------------
-# ���l�[�����s
+# リネーム実行
 # --------------------
 def Rename():
-    # ������̒u������
+    # 文字列の置換前、後
     replaceOld = cmds.textField("textfieldReplaceOld", query=True, text=True)
     replaceNew = cmds.textField("textfieldReplaceNew", query=True, text=True)
     
-    # �擪�ɒǉ����镶����
+    # 先頭に追加する文字列
     prefix = cmds.textField("textfieldPrefix", query=True, text=True)
     
-    # �����ɒǉ����镶����
+    # 末尾に追加する文字列
     suffix = cmds.textField("textfieldSuffix", query=True, text=True)
     
-    # �������镶����
+    # 文字列検索
     search = cmds.textField("textfieldSearch", query=True, text=True)
     
-    # ���O�ύX
+    # 名前変更
     select = cmds.ls(sl=True)
     for sel in select:
         newName = prefix +  sel.replace(replaceOld, replaceNew)
         cmds.rename(sel, newName + suffix) 
         
-    # �����񌟍�
+    # 文字列検索結果
         if search:
-            print("----------�����񌟍����ʁ[�[�[�[�[�[�[�[�[�[")
+            print("----------文字列検索結果ーーーーーーーーーー")
             for sel in select:
                 if search in sel:
                     print(sel)
 
 # --------------------
-# �ԍ��t��
+# 番号付け
 # --------------------
 def Number():
 
-    # �I�𒆃I�u�W�F�N�g�擾
+    # 選択オブジェクト取得
     selectList = cmds.ls(sl=True)
 
-    # �ŏ��ɑI�������I�u�W�F�N�g�̖��O�����o��
+    # 最初に選択したオブジェクトの名前を抽出する
     baseName = selectList[0]
 
     num = 1
@@ -62,26 +62,26 @@ def Number():
         num += 1
 
 # ====================
-# UI����
+# UI配置
 # ====================
 
 # --------------------
-# ���s�{�^��
+# 実行ボタン
 # --------------------
 
 cmds.columnLayout("columnExecution", adjustableColumn=True)
 
-cmds.text("textRename", label="���l�[�� �c�[��", h=50)
+cmds.text("textRename", label="リネーム ツール", h=50)
 
-cmds.button("buttonExecution", label="���l�[�����s", command=lambda *args:Rename(), h=50)
+cmds.button("buttonExecution", label="リネーム実行", command=lambda *args:Rename(), h=50)
 
 cmds.separator(height=20)
 
 # --------------------
-# ��������
+# 文字列置換
 # --------------------
 
-cmds.text("textReplace", label="��������", h=30)
+cmds.text("textReplace", label="文字列置換", h=30)
 
 cmds.setParent("..")
 
@@ -94,12 +94,12 @@ cmds.separator(height=20)
 cmds.setParent("..")
 
 # --------------------
-# ���ɕ�����ǉ�
+# 先頭に文字列追加
 # --------------------
 cmds.columnLayout("columnPrefix", adjustableColumn=True)
 
 cmds.separator(height=20)
-cmds.text("textPrefix", label="�擪�ɕ�����ǉ�", h=30)
+cmds.text("textPrefix", label="先頭に文字列追加", h=30)
 
 cmds.textField("textfieldPrefix", text="", w=200)
 
@@ -107,12 +107,12 @@ cmds.separator(height=20)
 cmds.setParent("..")
 
 # --------------------
-# �����ɕ�����ǉ�
+# 末尾に文字列追加
 # --------------------
 cmds.columnLayout("columnSuffix", adjustableColumn=True)
 
 cmds.separator(height=20)
-cmds.text("textSuffix", label="�����ɕ�����ǉ�", h=30)
+cmds.text("textSuffix", label="末尾に文字列追加", h=30)
 
 cmds.textField("textfieldSuffix", text="", w=200)
 
@@ -120,12 +120,12 @@ cmds.separator(height=20)
 cmds.setParent("..")
 
 # --------------------
-# �����񌟍�
+# 文字列検索
 # --------------------
 cmds.columnLayout("columnSearch", adjustableColumn=True)
 
 cmds.separator(height=20)
-cmds.text("textSearch", label="�����񌟍�", h=30)
+cmds.text("textSearch", label="文字列検索", h=30)
 
 cmds.textField("textfieldSearch", text="", w=200)
 
@@ -133,17 +133,17 @@ cmds.separator(height=20)
 cmds.setParent("..")
 
 # --------------------
-# �ԍ��t��
+# 番号付け
 # --------------------
 cmds.columnLayout("columnNumber", adjustableColumn=True)
 
-cmds.button("buttonNumber", label="�ԍ��t��", command=lambda *args:Number())
+cmds.button("buttonNumber", label="番号付け", command=lambda *args:Number())
 
 cmds.setParent("..")
 
 # --------------------
-# �I��
+# 終了
 # --------------------
 
-cmds.setParent("..")# ���C�A�E�g�I��
+cmds.setParent("..")# レイアウト終了
 cmds.showWindow(window)
