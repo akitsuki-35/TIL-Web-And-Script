@@ -2,8 +2,8 @@
     # file    : VRoidAnimation.py
     # brief   : VRoidモデルのアニメーション制作補助
     # author  : @akitsuki-35（https://github.com/akitsuki-35）
-    # date    : 2026/10/25
-    # updated : 2026/10/25
+    # date    : 2026/10/26
+    # updated : 2026/10/26
 #===========================================================
 import maya.cmds as cmds
 from enum import Enum
@@ -136,26 +136,23 @@ window = cmds.window(windowID, title="VRoid Animation", widthHeight=(400, 700))
 cmds.tabLayout("V_ToolTab", innerMarginWidth=5, innerMarginHeight=5)
 
 # --------------------
-# ジョイントコントローラー生成
+# 主要ジョイントのチェック
 # --------------------
 # カラムレイアウト作成
-cmds.columnLayout("V_Controller", adjustableColumn=True)
+cmds.columnLayout("V_JointCheck", adjustableColumn=True)
 
 # タブにアサイン
-cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Controller", u"Controller")])
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_JointCheck", u"Joint Check")])
 
 # ヘッダテキスト
-cmds.text("V_Controller_Header_1", label="Create Controller", h=20)
-cmds.text("V_Controller_Header_2", label="VRoidモデルのアニメーション用コントローラー作成", h=20)
+cmds.text("V_JointCheck_Header_1", label="Joint Check", h=20)
+cmds.text("V_JointCheck_Header_2", label="VRoidの主要ジョイントの有無をチェック", h=20)
 cmds.separator(h=5)
 
-# --------------------
-# 主要ジョイント取得
-# --------------------
-cmds.text("V_CollectJoint_Text", label="　★VRoidの主要なジョイントが存在するか取得", h=30, align='left')
+cmds.text("V_CollectJoint_Text", label="　★ジョイントを取得", h=20, align='left')
 
 # ジョイント情報表示
-cmds.rowLayout("JointRow" + str(i), numberOfColumns=3)
+cmds.rowLayout("JointRow" + str(i), numberOfColumns=2)
 cmds.text("V_JointCount_Value", label="　　--" + "/" + str(len(g_Joints)), h=30, align='left')
 cmds.text("V_JointCount_Message", label="　Joint Undefined", h=30, align='left')
 cmds.setParent("..")
@@ -183,12 +180,12 @@ cmds.setParent("..")
 
 # ボタン
 cmds.separator(h=5)
-cmds.button("V_CollectJoint_Button", label="取得", w=25, h=25, command=lambda *args:collectJoint())
+cmds.button("V_CollectJoint_Button", label="Joint Check", w=25, h=25, command=lambda *args:collectJoint())
 
 # ログ
-cmds.text("V_LogText", label="　★ログ", h=30, align='left')
-cmds.scrollField("V_Log", text="", h=60, editable=False)
-cmds.button("V_LogClearButton", label="ログをクリア", h=25, command=lambda *args:logClear())
+cmds.text("V_JointCheck_LogText", label="　★ログ", h=30, align='left')
+cmds.scrollField("V_JointCheck_Log", text="", h=60, editable=False)
+cmds.button("V_JointCheck_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear())
 
 # レイアウトから出る
 cmds.setParent("..")
@@ -230,27 +227,27 @@ def collectJoint():
     cmds.text("V_JointCount_Value", edit=True, label="　　" + str(count) + "/" + str(len(g_Joints)))
     if count == len(g_Joints):
         cmds.text("V_JointCount_Message", edit=True, label="　全ての主要ジョイントが存在")
-        addLog("collectJoint : 全ての主要ジョイントが存在")
+        addLog("collectJoint : 全ての主要ジョイントが存在", "V_JointCheck_Log")
     else:
         cmds.text("V_JointCount_Message", edit=True, label="　存在しない主要ジョイントがあります")
-        addLog("collectJoint : 存在しない主要ジョイントがあります")
+        addLog("collectJoint : 存在しない主要ジョイントがあります", "V_JointCheck_Log")
 
 # --------------------
 # ログ出力
 # --------------------
-def addLog(newText):
-    text = cmds.scrollField("V_Log", query=True, text=True)
+def addLog(newText, logItem):
+    text = cmds.scrollField(logItem, query=True, text=True)
 
     if text:
         updatedText = f"{text.rstrip()}\n{newText}\n"
     else:
         updatedText = f"{newText}\n"
 
-    cmds.scrollField("V_Log", edit=True, text=updatedText)
-    cmds.scrollField("V_Log", edit=True, insertionPosition=len(updatedText))
+    cmds.scrollField(logItem, edit=True, text=updatedText)
+    cmds.scrollField(logItem, edit=True, insertionPosition=len(updatedText))
 
 # --------------------
 # ログをクリア
 # --------------------
-def logClear():
-    cmds.scrollField("V_Log", edit=True, text="")
+def logClear(logItem):
+    cmds.scrollField(logItem, edit=True, text="")
