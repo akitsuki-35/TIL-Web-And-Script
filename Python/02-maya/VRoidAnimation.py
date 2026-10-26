@@ -10,7 +10,7 @@ from enum import Enum
 from dataclasses import dataclass
 
 ### VRoidモデルのジョイントチェック・コントローラー作成等のアニメーション補助機能を提供します
-### ジョイント名はエクスポート時のデフォルト名を前提としています
+### ジョイント名はVRMエクスポート時のデフォルト名を前提としています
 
 # --------------------
 # VRoidが生成するデフォルトのジョイント名をテーブルに格納
@@ -122,6 +122,27 @@ for i in range(len(V_JOINTS)):
     g_Joints[i] = Joint(enable=IsJoint(-1), jointKey=KEY_NAMES[i], name="----------")
 
 # --------------------
+# コントローラー・グループの索引クラス
+# 階層構造構築に使用
+# --------------------
+@dataclass
+class Controller:
+    jointKey: str # 部位名（インデックスとして使用）
+    curveName: str # コントローラー名
+    grpName: str # グループ名
+
+    def __init__(self, enable=IsJoint(-1), jointKey="", curveName="", grpName=""):
+        self.jointKey = jointKey
+        self.curveName = curveName
+        self.grpName = grpName
+
+# コントローラー・グループの検索用テーブル
+# キーとして部位名を渡し、カーブまたはグループを取得
+g_ctrlGrp = [Controller()] * len(V_JOINTS)
+for i in range(len(V_JOINTS)):
+    g_ctrlGrp[i] = Controller(jointKey=KEY_NAMES[i], curveName="", grpName="")
+
+# --------------------
 # ウィンドウ定義
 # --------------------
 windowID = "V_Window"
@@ -152,7 +173,7 @@ cmds.separator(h=5)
 cmds.text("V_CollectJoint_Text", label="　★ジョイントを取得", h=20, align='left')
 
 # ジョイント情報表示
-cmds.rowLayout("JointRow" + str(i), numberOfColumns=2)
+cmds.rowLayout("V_JointRow" + str(i), numberOfColumns=2)
 cmds.text("V_JointCount_Value", label="　　--" + "/" + str(len(g_Joints)), h=30, align='left')
 cmds.text("V_JointCount_Message", label="　Joint Undefined", h=30, align='left')
 cmds.setParent("..")
@@ -164,16 +185,16 @@ cmds.columnLayout(adjustableColumn=True, rowSpacing=0)
 
 # [アイコン]部位 : ジョイント名
 for i in range(len(g_Joints)):
-    cmds.rowLayout("JointRow" + str(i), numberOfColumns=3)
+    cmds.rowLayout("V_JointRow" + str(i), numberOfColumns=3)
     if g_Joints[i].enable == IsJoint(0):
-        cmds.image("IsEnable" + str(i), image="error.png")
+        cmds.image("V_IsEnable" + str(i), image="error.png")
     elif g_Joints[i].enable == IsJoint(1):
-        cmds.image("IsEnable" + str(i), image="confirm.png")
+        cmds.image("V_IsEnable" + str(i), image="confirm.png")
     else:
-        cmds.image("IsEnable" + str(i), image="help.png")
+        cmds.image("V_IsEnable" + str(i), image="help.png")
 
-    cmds.text("JointKey" + str(i), label=g_Joints[i].jointKey + " : ", h=16, align='left')
-    cmds.text("JointName" + str(i), label=g_Joints[i].name, h=16, align='left')
+    cmds.text("V_JointKey" + str(i), label=g_Joints[i].jointKey + " : ", h=16, align='left')
+    cmds.text("V_JointName" + str(i), label=g_Joints[i].name, h=16, align='left')
     cmds.setParent("..")
 cmds.setParent("..")
 cmds.setParent("..")
@@ -206,17 +227,24 @@ cmds.separator(h=5)
 
 cmds.text("V_CollectJoint_Text", label="　★コントローラー作成", h=20, align='left')
 
+cmds.text("V_V_ControllerPreSuf_Text", label="　　☆オブジェクト先頭・末尾テキスト", h=30, align='left')
+
 # prefix入力
-cmds.rowLayout("ControllerPrefixRow" + str(i), numberOfColumns=2)
-cmds.text("V_Controller_Prefix_Text", label="　　Prefix : ", h=20, align='left')
+cmds.rowLayout("V_ControllerPrefixRow" + str(i), numberOfColumns=2)
+cmds.text("V_Controller_Prefix_Text", label="　　　Prefix : ", h=20, align='left')
 cmds.textField("V_Controller_Prefix", text="V_", w=100, h=20)
 cmds.setParent("..")
 
 # suffix入力
-cmds.rowLayout("ControllerSuffixRow" + str(i), numberOfColumns=2)
-cmds.text("V_Controller_Suffix_Text", label="　　Suffix : ", h=20, align='left')
+cmds.rowLayout("V_ControllerSuffixRow" + str(i), numberOfColumns=2)
+cmds.text("V_Controller_Suffix_Text", label="　　　Suffix : ", h=20, align='left')
 cmds.textField("V_Controller_Suffix", text="_Ctrl", w=100, h=20)
 cmds.setParent("..")
+
+# 半径指定
+cmds.text("V_ControllerRadius_Text", label="　　☆コントローラー半径", h=30, align='left')
+cmds.intSliderGrp("V_Controller_RadiusSlider", label="　　　Radius : ", field=True, minValue=1, maxValue=10, value=1,
+                columnWidth3=[80, 100, 100], columnAlign3=["left", "left", "left"] )
 
 # ボタン
 cmds.separator(h=5)
@@ -256,13 +284,13 @@ def collectJoint():
 
         # UIアイテムを書き換え
         if g_Joints[i].enable == IsJoint(0):
-            cmds.image("IsEnable" + str(i),  edit=True, image="error.png")
+            cmds.image("V_IsEnable" + str(i),  edit=True, image="error.png")
         elif g_Joints[i].enable == IsJoint(1):
-            cmds.image("IsEnable" + str(i),  edit=True, image="confirm.png")
+            cmds.image("V_IsEnable" + str(i),  edit=True, image="confirm.png")
         else:
-            cmds.image("IsEnable" + str(i),  edit=True, image="empty.png")
+            cmds.image("V_IsEnable" + str(i),  edit=True, image="empty.png")
 
-        cmds.text("JointName" + str(i), edit=True, label=g_Joints[i].name)
+        cmds.text("V_JointName" + str(i), edit=True, label=g_Joints[i].name)
 
     cmds.text("V_JointCount_Value", edit=True, label="　　" + str(count) + "/" + str(len(g_Joints)))
     if count == len(g_Joints):
@@ -286,6 +314,23 @@ def createController():
     prefix = cmds.textField("V_Controller_Prefix", query=True, text=True)
     suffix = cmds.textField("V_Controller_Suffix", query=True, text=True)
 
+    # prefixまたはsuffixにマルチバイト文字が含まれていたら弾く
+    if(isMultiByte(prefix) and isMultiByte(suffix)):
+        addLog(f"Error : prefixとsuffixに2バイト文字が含まれています", "V_Controller_Log")
+        return
+    elif(isMultiByte(prefix)):
+        addLog(f"Error : prefixに2バイト文字が含まれています", "V_Controller_Log")
+        return
+    elif(isMultiByte(suffix)):
+        addLog(f"Error : suffixに2バイト文字が含まれています", "V_Controller_Log")
+        return
+
+    # 半径を取得
+    radius = cmds.intSliderGrp("V_Controller_RadiusSlider", query=True, value=True)
+
+    # ジョイントチェックを実行
+    collectJoint()
+
     for i, name in enumerate(V_JOINTS):
         # VRoidデフォルトジョイント名と一致するジョイントを取得
         joint = cmds.ls(name, type="joint")
@@ -293,11 +338,12 @@ def createController():
         # ジョイントが存在する？
         if joint:
             # 操作用のアニメーションカーブを作成
-            itemName = prefix + KEY_NAMES[i]
-            ctrl = cmds.circle(name=f"{itemName}{suffix}", normal=(0, 1, 0), radius=1.0, constructionHistory=False)[0]
+            itemName = prefix + KEY_NAMES[i] + suffix
+            ctrl = cmds.circle(name=f"{itemName}", normal=(0, 1, 0), radius=radius, constructionHistory=False)[0]
 
             # コントローラーをグループ化
-            group = cmds.group(ctrl, name=f"g_{itemName}{suffix}")
+            grpName = f"g_{itemName}"
+            group = cmds.group(ctrl, name=grpName)
 
             # 親グループだけをジョイントの位置・向きに合わせる
             cmds.matchTransform(group, joint, position=True, rotation=True, scale=False)
@@ -308,11 +354,61 @@ def createController():
             # コントローラーからジョイントへ回転を伝える
             cmds.orientConstraint(ctrl, joint, maintainOffset=False)
 
+            # テーブルに格納
+            g_ctrlGrp[i].curveName = itemName
+            g_ctrlGrp[i].jointKey = KEY_NAMES[i]
+            g_ctrlGrp[i].grpName = grpName
+
+            print(g_ctrlGrp[i])
+
             # ログ出力
             addLog(f"Success : Create {ctrl}", "V_Controller_Log")
         else:
             addLog(f"Error : Joint None {name}", "V_Controller_Log")
-            return
+
+    # --------------------
+    # 階層構造作成
+    # --------------------
+    # 上半身
+    createParent("Head", "Neck")
+    createParent("L_Hand", "L_LowerArm")
+    createParent("L_LowerArm", "L_UpperArm")
+    createParent("L_UpperArm", "L_Shoulder")
+    createParent("R_Hand", "R_LowerArm")
+    createParent("R_LowerArm", "R_UpperArm")
+    createParent("R_UpperArm", "R_Shoulder")
+    createParent("Neck", "UpperChest")
+    createParent("L_Shoulder", "UpperChest")
+    createParent("R_Shoulder", "UpperChest")
+    createParent("UpperChest", "Chest")
+    createParent("Chest", "Spine")
+
+    # 左足
+    createParent("L_Toes", "L_Foot")
+    createParent("L_Foot", "L_LowerLeg")
+    createParent("L_LowerLeg", "L_UpperLeg")
+
+    # 右足
+    createParent("R_Toes", "R_Foot")
+    createParent("R_Foot", "R_LowerLeg")
+    createParent("R_LowerLeg", "R_UpperLeg")
+
+    # 全身
+    createParent("Spine", "Hips")
+    createParent("L_UpperLeg", "Hips")
+    createParent("R_UpperLeg", "Hips")
+
+# --------------------
+# 階層構造作成（グループをコントローラーの子にする）
+# --------------------
+def createParent(grpKey, curveKey):
+    cmds.parent(g_ctrlGrp[KEY_NAMES.index(grpKey)].grpName, g_ctrlGrp[KEY_NAMES.index(curveKey)].curveName)
+
+# --------------------
+# マルチバイト文字を判定
+# --------------------
+def isMultiByte(str):
+    return len(str.encode('cp932')) != len(str)
 
 # --------------------
 # ログ出力
