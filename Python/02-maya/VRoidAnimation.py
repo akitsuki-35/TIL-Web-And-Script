@@ -352,7 +352,7 @@ cmds.button("V_CollectJoint_Button", label="ジョイントをチェック", w=2
 # ログ
 cmds.text("V_JointCheck_LogText", label="　★ログ", h=30, align='left')
 cmds.scrollField("V_JointCheck_Log", text="", h=60, editable=False)
-cmds.button("V_JointCheck_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_JointCheck_Log"))
+cmds.button("V_JointCheck_LogClear", label="ログをクリア", h=25, backgroundColor=[0.3, 0.4, 0.5], command=lambda *args:logClear("V_JointCheck_Log"))
 
 # レイアウトから出る
 cmds.setParent("..")
@@ -411,8 +411,30 @@ cmds.button("V_Controller_Button", label="コントローラーを作成", w=25,
 
 # ログ
 cmds.text("V_Controller_LogText", label="　★ログ", h=30, align='left')
-cmds.scrollField("V_Controller_Log", text="", h=200, editable=False)
+cmds.scrollField("V_Controller_Log", text="", h=250, editable=False)
 cmds.button("V_Controller_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_Controller_Log"))
+
+# レイアウトから出る
+cmds.setParent("..")
+
+# --------------------
+# コントローラー選択
+# --------------------
+# カラムレイアウト作成
+cmds.columnLayout("V_Select", adjustableColumn=True)
+
+# タブにアサイン
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Select", u"Select Controller")])
+
+# ヘッダテキスト
+cmds.text("V_Select_Header_1", label="Select Controller", h=20)
+cmds.text("V_Select_Header_2", label="コントローラーの選択状態を制御", h=20)
+cmds.separator(h=5)
+
+# ログ
+cmds.text("V_Select_LogText", label="　★ログ", h=30, align='left')
+cmds.scrollField("V_Select_Log", text="", h=60, editable=False)
+cmds.button("V_Select_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_Select_Log"))
 
 # レイアウトから出る
 cmds.setParent("..")
@@ -443,7 +465,7 @@ def collectJoint():
             g_Joints[i].enable = IsJoint(0)
 
             # ログを冗長にしないため、読み取れなかったジョイントのみログを出力
-            addLog(f"False : {name}", "V_JointCheck_Log")
+            addLog(f"False : ジョイント[{name}]が見つかりません", "V_JointCheck_Log")
 
         # UIアイテムを書き換え
         if g_Joints[i].enable == IsJoint(0):
@@ -457,11 +479,12 @@ def collectJoint():
 
     cmds.text("V_JointCount_Value", edit=True, label="　　" + str(count) + "/" + str(len(g_Joints)))
     if count == len(g_Joints):
-        cmds.text("V_JointCount_Message", edit=True, label="　全ての主要ジョイントが存在")
+        cmds.text("V_JointCount_Message", edit=True, label="　主要ジョイントは全て正常です")
         addLog("Success : 全ての主要ジョイントが存在", "V_JointCheck_Log")
+        return True
     else:
-        cmds.text("V_JointCount_Message", edit=True, label="　存在しない主要ジョイントがあります")
-        addLog("Warning : 存在しない主要ジョイントがあります", "V_JointCheck_Log")
+        cmds.text("V_JointCount_Message", edit=True, label="　取得できなかった主要ジョイントがあります")
+        addLog("Warning : 削除されているか、vrmデフォルト名から変更されているジョイントが存在します\nコントローラーの作成が正常に行われません", "V_JointCheck_Log")
 
 # --------------------
 # コントローラー作成
@@ -470,7 +493,14 @@ def createController():
     # コントローラーが既に存在するか取得
     nurbs = cmds.ls(type="nurbsCurve")
     if nurbs:
-        addLog(f"Error : 既にコントローラーが作成されています", "V_Controller_Log")
+        addLog(f"Error : 既にコントローラーが作成されています\n新規に作成するには既存のコントローラーを削除してください", "V_Controller_Log")
+        return
+
+    # ジョイントチェックを実行
+    if (collectJoint()):
+        addLog(f"Success : JointCheck OK!", "V_Controller_Log")
+    else:
+        addLog(f"Error : ジョイントが正常ではありません\nJoint Checkのタブを確認してください", "V_Controller_Log")
         return
 
     # prefixとsuffixを取得
@@ -479,20 +509,17 @@ def createController():
 
     # prefixまたはsuffixにマルチバイト文字が含まれていたら弾く
     if(isMultiByte(prefix) and isMultiByte(suffix)):
-        addLog(f"Error : prefixとsuffixに2バイト文字が含まれています", "V_Controller_Log")
+        addLog(f"Error : prefixとsuffixに2バイト文字が含まれています\nコントローラー名として使用できません", "V_Controller_Log")
         return
     elif(isMultiByte(prefix)):
-        addLog(f"Error : prefixに2バイト文字が含まれています", "V_Controller_Log")
+        addLog(f"Error : prefixに2バイト文字が含まれています\nコントローラー名として使用できません", "V_Controller_Log")
         return
     elif(isMultiByte(suffix)):
-        addLog(f"Error : suffixに2バイト文字が含まれています", "V_Controller_Log")
+        addLog(f"Error : suffixに2バイト文字が含まれています\nコントローラー名として使用できません", "V_Controller_Log")
         return
 
     # 半径を取得
     radius = cmds.intSliderGrp("V_Controller_RadiusSlider", query=True, value=True)
-
-    # ジョイントチェックを実行
-    collectJoint()
 
     # ルートジョイントを含めるか
     isRoot = cmds.checkBox("V_ControllerIsRoot", query=True, value=True)
@@ -542,11 +569,11 @@ def createController():
 
             # ログ出力
             if(cmds.ls(itemName)):
-                addLog(f"Success : Create {ctrl}", "V_Controller_Log")
+                addLog(f"Success : Create Success {ctrl}", "V_Controller_Log")
             else:
-                addLog(f"Error : Create {ctrl}", "V_Controller_Log")
+                addLog(f"Error : Create Failed {ctrl}", "V_Controller_Log")
         else:
-            addLog(f"Error : Joint None {name}", "V_Controller_Log")
+            addLog(f"Error : ジョイント[{name}]が存在しません", "V_Controller_Log")
 
     # --------------------
     # 階層構造作成
