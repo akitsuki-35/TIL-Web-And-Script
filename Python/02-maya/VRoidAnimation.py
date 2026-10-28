@@ -2,8 +2,8 @@
     # file    : VRoidAnimation.py
     # brief   : VRoidモデルのアニメーション制作補助
     # author  : @akitsuki-35（https://github.com/akitsuki-35）
-    # date    : 2026/10/26
-    # updated : 2026/10/26
+    # date    : 2026/10/29
+    # updated : 2026/10/29
 #===========================================================
 import maya.cmds as cmds
 from enum import Enum
@@ -13,7 +13,7 @@ from dataclasses import dataclass
 ### ジョイント名はVRMエクスポート時のデフォルト名を前提としています
 
 # --------------------
-# VRoidが生成するデフォルトのジョイント名をテーブルに格納
+# VRoidが生成するデフォルトのジョイント名を定数に格納
 # --------------------
 # 体幹
 JOINT_ROOT = "Root"
@@ -85,6 +85,7 @@ JOINT_L_LITTLE3 = "J_Bip_L_Little3"
 JOINT_R_LITTLE3 = "J_Bip_R_Little3"
 
 # ジョイントテーブル
+# VRoidジョイント名を格納し代入やインデックスとして使えるようにする
 V_JOINTS = [
     # 体幹
     JOINT_ROOT,
@@ -156,7 +157,7 @@ V_JOINTS = [
     JOINT_R_LITTLE3
 ]
 
-# 検索用に指ジョイントのみを格納したテーブル
+# 指コントローラー作成判定用に指ジョイントのみを格納したテーブル
 V_FINGER_JOINS = [
     # 親指
     JOINT_L_THUMB1,
@@ -200,7 +201,8 @@ V_FINGER_JOINS = [
 ]
 
 # --------------------
-# ジョイント部位テーブル
+# ジョイント部位名テーブル
+# VRoidのデフォルトジョイント名が冗長なため、正規化名を各種テーブルのキー名として持たせる
 # --------------------
 KEY_NAMES = [
     # 体幹
@@ -356,7 +358,7 @@ cmds.text("V_CollectJoint_Text", label="　★ジョイントを取得", h=20, a
 
 # ジョイント数と判定結果を表示する
 cmds.rowLayout("V_JointRow" + str(i), numberOfColumns=2)
-cmds.text("V_JointCount_Value", label="　　--" + "/" + str(len(g_Joints)), h=30, align='left')
+cmds.text("V_JointCount_Value", label=f"　　--/{str(len(g_Joints))}", h=30, align='left')
 cmds.text("V_JointCount_Message", label="　Joint Undefined", h=30, align='left')
 cmds.setParent("..")
 cmds.separator(h=5)
@@ -368,16 +370,16 @@ cmds.columnLayout(adjustableColumn=True, rowSpacing=0)
 # ジョイント有無の判定結果を表示する領域
 # [アイコン]部位 : ジョイント名
 for i in range(len(g_Joints)):
-    cmds.rowLayout("V_JointRow" + str(i), numberOfColumns=3)
+    cmds.rowLayout(f"V_JointRow{str(i)}", numberOfColumns=3)
     if g_Joints[i].enable == IsJoint(0):
-        cmds.image("V_IsEnable" + str(i), image="error.png")
+        cmds.image(f"V_IsEnable{str(i)}", image="error.png")
     elif g_Joints[i].enable == IsJoint(1):
-        cmds.image("V_IsEnable" + str(i), image="confirm.png")
+        cmds.image(f"V_IsEnable{str(i)}", image="confirm.png")
     else:
-        cmds.image("V_IsEnable" + str(i), image="help.png")
+        cmds.image(f"V_IsEnable{str(i)}", image="help.png")
 
-    cmds.text("V_JointKey" + str(i), label=g_Joints[i].jointKey + " : ", h=16, align='left')
-    cmds.text("V_JointName" + str(i), label=g_Joints[i].name, h=16, align='left')
+    cmds.text(f"V_JointKey{str(i)}", label=f"{g_Joints[i].jointKey} : ", h=16, align='left')
+    cmds.text(f"V_JointName{str(i)}", label=g_Joints[i].name, h=16, align='left')
     cmds.setParent("..")
 cmds.setParent("..")
 cmds.setParent("..")
@@ -411,13 +413,13 @@ cmds.text("V_CollectJoint_Text", label="　★コントローラー作成", h=20
 cmds.text("V_V_ControllerPreSuf_Text", label="　　☆オブジェクト先頭・末尾テキスト", h=30, align='left')
 
 # prefix
-cmds.rowLayout("V_ControllerPrefixRow" + str(i), numberOfColumns=2)
+cmds.rowLayout(f"V_ControllerPrefixRow{str(i)}", numberOfColumns=2)
 cmds.text("V_Controller_Prefix_Text", label="　　　Prefix : ", h=20, align='left')
 cmds.textField("V_Controller_Prefix", text="V_", w=100, h=20)
 cmds.setParent("..")
 
 # suffix
-cmds.rowLayout("V_ControllerSuffixRow" + str(i), numberOfColumns=2)
+cmds.rowLayout(f"V_ControllerSuffixRow{str(i)}", numberOfColumns=2)
 cmds.text("V_Controller_Suffix_Text", label="　　　Suffix : ", h=20, align='left')
 cmds.textField("V_Controller_Suffix", text="_Ctrl", w=100, h=20)
 cmds.setParent("..")
@@ -429,13 +431,13 @@ cmds.intSliderGrp("V_Controller_RadiusSlider", label="　　　Radius : ", field
 
 # コントローラーにRootを含めるか
 cmds.text("V_ControllerCheckBox_Text", label="　　☆詳細設定", h=30, align='left')
-cmds.rowLayout("V_ControllerCheckBoxRootRow" + str(i), numberOfColumns=2)
+cmds.rowLayout(f"V_ControllerCheckBoxRootRow{str(i)}", numberOfColumns=2)
 cmds.text("V_ControllerIsRoot_Space", label="　　　", align='left')
 cmds.checkBox("V_ControllerIsRoot", label="Rootを含める",  align='left')
 cmds.setParent("..")
 
 # コントローラーに指ジョイントを含めるか
-cmds.rowLayout("V_ControllerCheckBoxFingerRow" + str(i), numberOfColumns=2)
+cmds.rowLayout(f"V_ControllerCheckBoxFingerRow{str(i)}", numberOfColumns=2)
 cmds.text("V_ControllerIsFinger_Space", label="　　　", align='left')
 cmds.checkBox("V_ControllerIsFinger", label="指ジョイントを含める",  align='left')
 cmds.setParent("..")
@@ -507,14 +509,14 @@ def collectJoint():
         # UIアイテムを書き換え
         # アイコンをジョイント存在の有無に応じて変更
         if g_Joints[i].enable == IsJoint(0):
-            cmds.image("V_IsEnable" + str(i),  edit=True, image="error.png")
+            cmds.image(f"V_IsEnable{str(i)}",  edit=True, image="error.png")
         elif g_Joints[i].enable == IsJoint(1):
-            cmds.image("V_IsEnable" + str(i),  edit=True, image="confirm.png")
+            cmds.image(f"V_IsEnable{str(i)}",  edit=True, image="confirm.png")
         else:
-            cmds.image("V_IsEnable" + str(i),  edit=True, image="empty.png")
+            cmds.image(f"V_IsEnable{str(i)}",  edit=True, image="empty.png")
 
         # 部位 ; 実ジョイント名の表示
-        cmds.text("V_JointName" + str(i), edit=True, label=g_Joints[i].name)
+        cmds.text(f"V_JointName{str(i)}", edit=True, label=g_Joints[i].name)
 
     # ジョイントの正常数/総数を更新
     cmds.text("V_JointCount_Value", edit=True, label=f"　　{str(count)}/{str(len(g_Joints))}")
@@ -588,7 +590,7 @@ def createController():
         # ジョイントが存在する？
         if joint:
             # 操作用のアニメーションカーブを作成
-            itemName = prefix + KEY_NAMES[i] + suffix
+            itemName = f"{prefix}{KEY_NAMES[i]}{suffix}"
             ctrl = cmds.circle(name=f"{itemName}", normal=(0, 1, 0), radius=radius, constructionHistory=False)[0]
 
             # コントローラーをグループ化
