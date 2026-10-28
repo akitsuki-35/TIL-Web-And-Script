@@ -39,6 +39,41 @@ JOINT_R_FOOT = "J_Bip_R_Foot"
 JOINT_L_TOES = "J_Bip_L_ToeBase"
 JOINT_R_TOES = "J_Bip_R_ToeBase"
 
+JOINT_L_THUMB1 = "J_Bip_L_Thumb1"
+JOINT_R_THUMB1 = "J_Bip_R_Thumb1"
+JOINT_L_THUMB2 = "J_Bip_L_Thumb2"
+JOINT_R_THUMB2 = "J_Bip_R_Thumb2"
+JOINT_L_THUMB3 = "J_Bip_L_Thumb3"
+JOINT_R_THUMB3 = "J_Bip_R_Thumb3"
+
+JOINT_L_INDEX1 = "J_Bip_L_Index1"
+JOINT_R_INDEX1 = "J_Bip_R_Index1"
+JOINT_L_INDEX2 = "J_Bip_L_Index2"
+JOINT_R_INDEX2 = "J_Bip_R_Index2"
+JOINT_L_INDEX3 = "J_Bip_L_Index3"
+JOINT_R_INDEX3 = "J_Bip_R_Index3"
+
+JOINT_L_MIDDLE1 = "J_Bip_L_Middle1"
+JOINT_R_MIDDLE1 = "J_Bip_R_Middle1"
+JOINT_L_MIDDLE2 = "J_Bip_L_Middle2"
+JOINT_R_MIDDLE2 = "J_Bip_R_Middle2"
+JOINT_L_MIDDLE3 = "J_Bip_L_Middle3"
+JOINT_R_MIDDLE3 = "J_Bip_R_Middle3"
+
+JOINT_L_RING1 = "J_Bip_L_Ring1"
+JOINT_R_RING1 = "J_Bip_R_Ring1"
+JOINT_L_RING2 = "J_Bip_L_Ring2"
+JOINT_R_RING2 = "J_Bip_R_Ring2"
+JOINT_L_RING3 = "J_Bip_L_Ring3"
+JOINT_R_RING3 = "J_Bip_R_Ring3"
+
+JOINT_L_LITTLE1 = "J_Bip_L_Little1"
+JOINT_R_LITTLE1 = "J_Bip_R_Little1"
+JOINT_L_LITTLE2 = "J_Bip_L_Little2"
+JOINT_R_LITTLE2 = "J_Bip_R_Little2"
+JOINT_L_LITTLE3 = "J_Bip_L_Little3"
+JOINT_R_LITTLE3 = "J_Bip_R_Little3"
+
 # ジョイントテーブル
 V_JOINTS = [
     JOINT_ROOT,
@@ -63,7 +98,80 @@ V_JOINTS = [
     JOINT_L_FOOT,
     JOINT_R_FOOT,
     JOINT_L_TOES,
-    JOINT_R_TOES
+    JOINT_R_TOES,
+
+    JOINT_L_THUMB1,
+    JOINT_R_THUMB1,
+    JOINT_L_THUMB2,
+    JOINT_R_THUMB2,
+    JOINT_L_THUMB3,
+    JOINT_R_THUMB3,
+
+    JOINT_L_INDEX1,
+    JOINT_R_INDEX1,
+    JOINT_L_INDEX2,
+    JOINT_R_INDEX2,
+    JOINT_L_INDEX3,
+    JOINT_R_INDEX3,
+
+    JOINT_L_MIDDLE1,
+    JOINT_R_MIDDLE1,
+    JOINT_L_MIDDLE2,
+    JOINT_R_MIDDLE2,
+    JOINT_L_MIDDLE3,
+    JOINT_R_MIDDLE3,
+
+    JOINT_L_RING1,
+    JOINT_R_RING1,
+    JOINT_L_RING2,
+    JOINT_R_RING2,
+    JOINT_L_RING3,
+    JOINT_R_RING3,
+
+    JOINT_L_LITTLE1,
+    JOINT_R_LITTLE1,
+    JOINT_L_LITTLE2,
+    JOINT_R_LITTLE2,
+    JOINT_L_LITTLE3,
+    JOINT_R_LITTLE3
+]
+
+# 検索用に指ジョイントのみを格納したテーブル
+V_FINGER_JOINS = [
+    JOINT_L_THUMB1,
+    JOINT_R_THUMB1,
+    JOINT_L_THUMB2,
+    JOINT_R_THUMB2,
+    JOINT_L_THUMB3,
+    JOINT_R_THUMB3,
+
+    JOINT_L_INDEX1,
+    JOINT_R_INDEX1,
+    JOINT_L_INDEX2,
+    JOINT_R_INDEX2,
+    JOINT_L_INDEX3,
+    JOINT_R_INDEX3,
+
+    JOINT_L_MIDDLE1,
+    JOINT_R_MIDDLE1,
+    JOINT_L_MIDDLE2,
+    JOINT_R_MIDDLE2,
+    JOINT_L_MIDDLE3,
+    JOINT_R_MIDDLE3,
+
+    JOINT_L_RING1,
+    JOINT_R_RING1,
+    JOINT_L_RING2,
+    JOINT_R_RING2,
+    JOINT_L_RING3,
+    JOINT_R_RING3,
+
+    JOINT_L_LITTLE1,
+    JOINT_R_LITTLE1,
+    JOINT_L_LITTLE2,
+    JOINT_R_LITTLE2,
+    JOINT_L_LITTLE3,
+    JOINT_R_LITTLE3
 ]
 
 # --------------------
@@ -92,7 +200,42 @@ KEY_NAMES = [
     "L_Foot",
     "R_Foot",
     "L_Toes",
-    "R_Toes"
+    "R_Toes",
+
+    "L_Thumb1",
+    "R_Thumb1",
+    "L_Thumb2",
+    "R_Thumb2",
+    "L_Thumb3",
+    "R_Thumb3",
+
+    "L_Index1",
+    "R_Index1",
+    "L_Index2",
+    "R_Index2",
+    "L_Index3",
+    "R_Index3",
+
+    "L_Middle1",
+    "R_Middle1",
+    "L_Middle2",
+    "R_Middle2",
+    "L_Middle3",
+    "R_Middle3",
+
+    "L_Ring1",
+    "R_Ring1",
+    "L_Ring2",
+    "R_Ring2",
+    "L_Ring3",
+    "R_Ring3",
+
+    "L_Little1",
+    "R_Little1",
+    "L_Little2",
+    "R_Little2",
+    "L_Little3",
+    "R_Little3"
 ]
 
 # --------------------
@@ -268,7 +411,7 @@ cmds.button("V_Controller_Button", label="コントローラーを作成", w=25,
 
 # ログ
 cmds.text("V_Controller_LogText", label="　★ログ", h=30, align='left')
-cmds.scrollField("V_Controller_Log", text="", h=400, editable=False)
+cmds.scrollField("V_Controller_Log", text="", h=200, editable=False)
 cmds.button("V_Controller_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_Controller_Log"))
 
 # レイアウトから出る
@@ -295,8 +438,12 @@ def collectJoint():
             g_Joints[i].enable = IsJoint(1)
             g_Joints[i].name = name
             count += 1
+
         else:
             g_Joints[i].enable = IsJoint(0)
+
+            # ログを冗長にしないため、読み取れなかったジョイントのみログを出力
+            addLog(f"False : {name}", "V_JointCheck_Log")
 
         # UIアイテムを書き換え
         if g_Joints[i].enable == IsJoint(0):
@@ -350,11 +497,18 @@ def createController():
     # ルートジョイントを含めるか
     isRoot = cmds.checkBox("V_ControllerIsRoot", query=True, value=True)
 
+    # 指ジョイントを含めるか
+    isFinger = cmds.checkBox("V_ControllerIsFinger", query=True, value=True)
+
     for i, name in enumerate(V_JOINTS):
 
         # ルートジョイントを含めない設定の場合はルートジョイントのコントローラー作成をスキップ
         if(name == JOINT_ROOT):
             if(not isRoot):
+                continue
+
+        if(isFingerJoint(name)):
+            if(not isFinger):
                 continue
 
         # VRoidデフォルトジョイント名と一致するジョイントを取得
@@ -387,13 +541,54 @@ def createController():
             print(g_ctrlGrp[i])
 
             # ログ出力
-            addLog(f"Success : Create {ctrl}", "V_Controller_Log")
+            if(cmds.ls(itemName)):
+                addLog(f"Success : Create {ctrl}", "V_Controller_Log")
+            else:
+                addLog(f"Error : Create {ctrl}", "V_Controller_Log")
         else:
             addLog(f"Error : Joint None {name}", "V_Controller_Log")
 
     # --------------------
     # 階層構造作成
     # --------------------
+    # 指ジョイントを作成した場合は、先に指ジョイントの階層構造を作成
+    if(isFinger):
+        # 左手
+        createParent("L_Thumb3", "L_Thumb2")
+        createParent("L_Thumb2", "L_Thumb1")
+        createParent("L_Index3", "L_Index2")
+        createParent("L_Index2", "L_Index1")
+        createParent("L_Middle3", "L_Middle2")
+        createParent("L_Middle2", "L_Middle1")
+        createParent("L_Ring3", "L_Ring2")
+        createParent("L_Ring2", "L_Ring1")
+        createParent("L_Little3", "L_Little2")
+        createParent("L_Little2", "L_Little1")
+
+        # 右手
+        createParent("R_Thumb3", "R_Thumb2")
+        createParent("R_Thumb2", "R_Thumb1")
+        createParent("R_Index3", "R_Index2")
+        createParent("R_Index2", "R_Index1")
+        createParent("R_Middle3", "R_Middle2")
+        createParent("R_Middle2", "R_Middle1")
+        createParent("R_Ring3", "R_Ring2")
+        createParent("R_Ring2", "R_Ring1")
+        createParent("R_Little3", "R_Little2")
+        createParent("R_Little2", "R_Little1")
+
+        # 手のジョイントの子にする
+        createParent("L_Thumb1", "L_Hand")
+        createParent("L_Index1", "L_Hand")
+        createParent("L_Middle1", "L_Hand")
+        createParent("L_Ring1", "L_Hand")
+        createParent("L_Little1", "L_Hand")
+        createParent("R_Thumb1", "R_Hand")
+        createParent("R_Index1", "R_Hand")
+        createParent("R_Middle1", "R_Hand")
+        createParent("R_Ring1", "R_Hand")
+        createParent("R_Little1", "R_Hand")
+
     # 上半身
     createParent("Head", "Neck")
     createParent("L_Hand", "L_LowerArm")
@@ -423,7 +618,7 @@ def createController():
     createParent("L_UpperLeg", "Hips")
     createParent("R_UpperLeg", "Hips")
 
-    # ルートのコントローラーが存在する場合は、Hipsをルートの子にする
+    # ルートのコントローラーを作成した場合は、Hipsをルートの子にする
     if(isRoot):
         createParent("Hips", "Root")
         print("Root")
@@ -433,6 +628,16 @@ def createController():
 # --------------------
 def createParent(grpKey, curveKey):
     cmds.parent(g_ctrlGrp[KEY_NAMES.index(grpKey)].grpName, g_ctrlGrp[KEY_NAMES.index(curveKey)].curveName)
+
+# --------------------
+# コントローラーを作ろうとしているジョイントは指ジョイントか判定
+# --------------------
+def isFingerJoint(str):
+    for i in range(len(V_FINGER_JOINS)):
+        if(V_FINGER_JOINS[i] == str):
+            return True
+
+    return False
 
 # --------------------
 # マルチバイト文字を判定
