@@ -15,6 +15,7 @@ from dataclasses import dataclass
 # --------------------
 # VRoidが生成するデフォルトのジョイント名をテーブルに格納
 # --------------------
+JOINT_ROOT = "Root"
 JOINT_HIPS = "J_Bip_C_Hips"
 JOINT_SPINE = "J_Bip_C_Spine"
 JOINT_CHEST = "J_Bip_C_Chest"
@@ -40,6 +41,7 @@ JOINT_R_TOES = "J_Bip_R_ToeBase"
 
 # ジョイントテーブル
 V_JOINTS = [
+    JOINT_ROOT,
     JOINT_HIPS,
     JOINT_SPINE,
     JOINT_CHEST,
@@ -68,6 +70,7 @@ V_JOINTS = [
 # ジョイント部位テーブル
 # --------------------
 KEY_NAMES = [
+    "Root",
     "Hips",
     "Spine",
     "Chest",
@@ -246,6 +249,19 @@ cmds.text("V_ControllerRadius_Text", label="　　☆コントローラー半径
 cmds.intSliderGrp("V_Controller_RadiusSlider", label="　　　Radius : ", field=True, minValue=1, maxValue=10, value=1,
                 columnWidth3=[80, 100, 100], columnAlign3=["left", "left", "left"] )
 
+# コントローラーにRootを含めるか
+cmds.text("V_ControllerCheckBox_Text", label="　　☆詳細設定", h=30, align='left')
+cmds.rowLayout("V_ControllerCheckBoxRootRow" + str(i), numberOfColumns=2)
+cmds.text("V_ControllerIsRoot_Space", label="　　　", align='left')
+cmds.checkBox("V_ControllerIsRoot", label="Rootを含める",  align='left')
+cmds.setParent("..")
+
+# コントローラーに指ジョイントを含めるか
+cmds.rowLayout("V_ControllerCheckBoxFingerRow" + str(i), numberOfColumns=2)
+cmds.text("V_ControllerIsFinger_Space", label="　　　", align='left')
+cmds.checkBox("V_ControllerIsFinger", label="指ジョイントを含める",  align='left')
+cmds.setParent("..")
+
 # ボタン
 cmds.separator(h=5)
 cmds.button("V_Controller_Button", label="コントローラーを作成", w=25, h=25, command=lambda *args:createController())
@@ -331,7 +347,16 @@ def createController():
     # ジョイントチェックを実行
     collectJoint()
 
+    # ルートジョイントを含めるか
+    isRoot = cmds.checkBox("V_ControllerIsRoot", query=True, value=True)
+
     for i, name in enumerate(V_JOINTS):
+
+        # ルートジョイントを含めない設定の場合はルートジョイントのコントローラー作成をスキップ
+        if(name == JOINT_ROOT):
+            if(not isRoot):
+                continue
+
         # VRoidデフォルトジョイント名と一致するジョイントを取得
         joint = cmds.ls(name, type="joint")
 
@@ -397,6 +422,11 @@ def createController():
     createParent("Spine", "Hips")
     createParent("L_UpperLeg", "Hips")
     createParent("R_UpperLeg", "Hips")
+
+    # ルートのコントローラーが存在する場合は、Hipsをルートの子にする
+    if(isRoot):
+        createParent("Hips", "Root")
+        print("Root")
 
 # --------------------
 # 階層構造作成（グループをコントローラーの子にする）
