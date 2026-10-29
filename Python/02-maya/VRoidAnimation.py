@@ -2,8 +2,8 @@
     # file    : VRoidAnimation.py
     # brief   : VRoidモデルのアニメーション制作補助
     # author  : @akitsuki-35（https://github.com/akitsuki-35）
-    # date    : 2026/10/29
-    # updated : 2026/10/29
+    # date    : 2026/10/30
+    # updated : 2026/10/30
 #===========================================================
 import maya.cmds as cmds
 from enum import Enum
@@ -11,6 +11,9 @@ from dataclasses import dataclass
 
 ### VRoidモデルのジョイントチェック・コントローラー作成等のアニメーション補助機能を提供します
 ### ジョイント名はVRMエクスポート時のデフォルト名を前提としています
+
+### VRoid→BlenderでFBX変換したモデルをDirectXに導入し、Mayaでアニメーションを作成して動かすため
+### VRoidのデフォルトボーン名で厳格に精査する
 
 # --------------------
 # VRoidが生成するデフォルトのジョイント名を定数に格納
@@ -327,6 +330,10 @@ g_ctrlGrp = [Controller()] * len(V_JOINTS)
 for i in range(len(V_JOINTS)):
     g_ctrlGrp[i] = Controller(jointKey=KEY_NAMES[i], curveName="", grpName="")
 
+# コントローラーがスクリプトに接続済みか（g_ctrlGrpに詰められているか）
+# コントローラー作成後にスクリプトを閉じるとg_ctrlGrpが空になるため、再接続が必要
+IS_CTRL_CONNECTED = False
+
 # --------------------
 # ウィンドウ定義
 # --------------------
@@ -433,13 +440,13 @@ cmds.intSliderGrp("V_Controller_RadiusSlider", label="　　　Radius : ", field
 cmds.text("V_ControllerCheckBox_Text", label="　　☆詳細設定", h=30, align='left')
 cmds.rowLayout(f"V_ControllerCheckBoxRootRow{str(i)}", numberOfColumns=2)
 cmds.text("V_ControllerIsRoot_Space", label="　　　", align='left')
-cmds.checkBox("V_ControllerIsRoot", label="Rootを含める",  align='left')
+cmds.checkBox("V_ControllerIsRoot", label="Rootを含める", align='left', value=True)
 cmds.setParent("..")
 
 # コントローラーに指ジョイントを含めるか
 cmds.rowLayout(f"V_ControllerCheckBoxFingerRow{str(i)}", numberOfColumns=2)
 cmds.text("V_ControllerIsFinger_Space", label="　　　", align='left')
-cmds.checkBox("V_ControllerIsFinger", label="指ジョイントを含める",  align='left')
+cmds.checkBox("V_ControllerIsFinger", label="指ジョイントを含める",  align='left', value=True)
 cmds.setParent("..")
 
 # ボタン
@@ -455,7 +462,7 @@ cmds.button("V_Controller_LogClear", label="ログをクリア", h=25, command=l
 cmds.setParent("..")
 
 # --------------------
-# コントローラー選択
+# コントローラーの選択状態を制御
 # --------------------
 # レイアウトを作成してタブに挿入
 cmds.columnLayout("V_Select", adjustableColumn=True)
@@ -467,6 +474,13 @@ cmds.text("V_Select_Header_2", label="コントローラーの選択状態を制
 cmds.separator(h=5)
 
 cmds.frameLayout("V_SelectFrame", label="上半身", collapsable=True)
+
+cmds.rowLayout("V_SelectCenterRow", numberOfColumns=3)
+cmds.text("V_Select", label="　　　", h=30, align='left')
+cmds.button("V_SelectRootButton", label=KEY_NAMES[0], w=100, h=30, command=lambda *args:selectController(KEY_NAMES[0]))
+cmds.button("V_SelectHipsButton", label=KEY_NAMES[1], w=100, h=30, command=lambda *args:selectController(KEY_NAMES[1]))
+cmds.setParent("..")
+
 cmds.setParent("..")
 
 # ログ
@@ -534,6 +548,8 @@ def collectJoint():
 # コントローラー作成
 # --------------------
 def createController():
+    global IS_CTRL_CONNECTED
+
     # コントローラーが既に存在するか取得
     nurbs = cmds.ls(type="nurbsCurve")
     if nurbs:
@@ -621,6 +637,9 @@ def createController():
             # ジョイントが存在しない場合はエラーログを出して次の処理へ
             # ただし全ジョイントが取得できないとそもそも処理されないので保険
             addLog(f"Error : ジョイント[{name}]が存在しません", "V_Controller_Log")
+
+    # 全コントローラーが正常に作成されたら、コントローラー接続フラグをオンに
+    IS_CTRL_CONNECTED = True
 
     # --------------------
     # コントローラー階層構造作成
@@ -714,6 +733,82 @@ def isFingerJoint(str):
             return True
 
     return False
+
+# --------------------
+# コントローラーの選択状態制御
+# --------------------
+def selectController(str):
+    # Altキーが押されているかを取得
+    mods = cmds.getModifiers()
+    isAltPressed = (mods & 8) > 0
+
+    # コントローラーが作成済みか取得
+    nurbs = cmds.ls(type="nurbsCurve")
+    if not nurbs:
+        addLog(f"Error : コントローラーが作成されていません\nCreate Controllerタブからコントローラーを作成してください", "V_Select_Log")
+        return
+
+    # スクリプトを開く前にコントローラーが作成されていた場合はg_ctrlGrpに詰められていないため詰めなおす
+    reconnectController(nurbs)
+
+    # ターゲットのコントローラー名を取得
+    ctrl = g_ctrlGrp[KEY_NAMES.index(str)].curveName
+
+    # 存在しない場合は弾く
+    curve = cmds.ls(ctrl)
+    if(not curve):
+        addLog(f"Error : {str} のコントローラーが存在しません", "V_Select_Log")
+        return
+
+    sel = cmds.ls(selection=True)
+    isSel = False
+
+    if ctrl in sel:
+        isSel = True
+
+    # Altキーが押されている場合は追加選択する
+    # アウトライナ上と同様の操作感にする
+    cmds.select(ctrl, add=isAltPressed, deselect=isSel)
+
+    if not isSel:
+        addLog(f"Success : {ctrl} を選択しました", "V_Select_Log")
+    else:
+        addLog(f"Success : {ctrl} の選択を解除しました", "V_Select_Log")
+
+    sel = cmds.ls(selection=True)
+    addLog(f"選択中 : {sel}", "V_Select_Log")
+
+# --------------------
+# コントローラー再接続
+# --------------------
+def reconnectController(nurbs):
+    global IS_CTRL_CONNECTED
+
+    if not IS_CTRL_CONNECTED:
+        # カーブの親を取得
+        ctrls =  cmds.listRelatives(nurbs, parent=True, fullPath=False) or []
+        ctrls = list(set(ctrls))
+
+        # リスト参照時にデータ不整合が起こるため、V_JOINTS等と部位の順序が一致するよう並べ替える
+        for i in range(len(V_JOINTS)):
+            # 部位のキー名を取得
+            target = KEY_NAMES[i]
+
+            # キー名の文字列が含まれているコントローラーおよびグループを取得する
+            for ctrl in ctrls:
+                if target in ctrl:
+                    # コントローラーの親となるグループの名前を取得
+                    grp = cmds.listRelatives(ctrl, parent=True, fullPath=False)
+                    grpName = grp[0]
+
+                    # g_ctrlGrp[i]に詰める
+                    g_ctrlGrp[i].curveName = ctrl
+                    g_ctrlGrp[i].grpName = grpName
+                    break
+
+        # 接続フラグをオンにし、多重に処理されないようにする
+        IS_CTRL_CONNECTED = True
+        addLog(f"Reconnect : 作成済みコントローラーを再接続しました", "V_Select_Log")
 
 # --------------------
 # マルチバイト文字を判定
