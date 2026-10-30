@@ -356,170 +356,8 @@ if V_SelectJobID_2 and cmds.scriptJob(exists=V_SelectJobID_2):
     V_SelectJobID_2 = None
 
 # --------------------
-# ウィンドウ定義
+# 補助関数定義
 # --------------------
-windowID = "V_Window"
-
-if cmds.window(windowID, exists=True):
-    cmds.deleteUI(windowID)
-window = cmds.window(windowID, title="VRoid Animation", widthHeight=(400, 700))
-
-# --------------------
-# ツールをタブ切り替えに対応
-# --------------------
-cmds.tabLayout("V_ToolTab", innerMarginWidth=5, innerMarginHeight=5)
-
-# --------------------
-# 主要ジョイントのチェック
-# --------------------
-# レイアウトを作成してタブに挿入
-cmds.columnLayout("V_JointCheck", adjustableColumn=True)
-cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_JointCheck", u"Joint Check")])
-
-# ヘッダテキスト表示
-cmds.text("V_JointCheck_Header_1", label="Joint Check", h=20)
-cmds.text("V_JointCheck_Header_2", label="VRoidの主要ジョイントの有無をチェック", h=20)
-cmds.separator(h=5)
-
-# 見出しテキスト
-cmds.text("V_CollectJoint_Text", label="　★ジョイントを取得", h=20, align='left')
-
-# ジョイント数と判定結果を表示する
-cmds.rowLayout("V_JointRow" + str(i), numberOfColumns=2)
-cmds.text("V_JointCount_Value", label=f"　　--/{str(len(g_Joints))}", h=30, align='left')
-cmds.text("V_JointCount_Message", label="　Joint Undefined", h=30, align='left')
-cmds.setParent("..")
-cmds.separator(h=5)
-
-# スクロールレイアウトでジョイント状態を表示
-cmds.scrollLayout(childResizable=True)
-cmds.columnLayout(adjustableColumn=True, rowSpacing=0)
-
-# ジョイント有無の判定結果を表示する領域
-# [アイコン]部位 : ジョイント名
-for i in range(len(g_Joints)):
-    cmds.rowLayout(f"V_JointRow{str(i)}", numberOfColumns=3)
-    if g_Joints[i].enable == IsJoint(0):
-        cmds.image(f"V_IsEnable{str(i)}", image="error.png")
-    elif g_Joints[i].enable == IsJoint(1):
-        cmds.image(f"V_IsEnable{str(i)}", image="confirm.png")
-    else:
-        cmds.image(f"V_IsEnable{str(i)}", image="help.png")
-
-    cmds.text(f"V_JointKey{str(i)}", label=f"{g_Joints[i].jointKey} : ", h=16, align='left')
-    cmds.text(f"V_JointName{str(i)}", label=g_Joints[i].name, h=16, align='left')
-    cmds.setParent("..")
-cmds.setParent("..")
-cmds.setParent("..")
-
-# ボタン
-cmds.separator(h=5)
-cmds.button("V_CollectJoint_Button", label="ジョイントをチェック", w=25, h=25, command=lambda *args:collectJoint())
-
-# ログ
-cmds.text("V_JointCheck_LogText", label="　★ログ", h=30, align='left')
-cmds.scrollField("V_JointCheck_Log", text="", h=60, editable=False)
-cmds.button("V_JointCheck_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_JointCheck_Log"))
-
-# レイアウトから出る
-cmds.setParent("..")
-
-# --------------------
-# コントローラー作成
-# --------------------
-# レイアウトを作成してタブに挿入
-cmds.columnLayout("V_Controller", adjustableColumn=True)
-cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Controller", u"Create Controller")])
-
-# ヘッダテキスト
-cmds.text("V_Controller_Header_1", label="Create Controller", h=20)
-cmds.text("V_Controller_Header_2", label="VRoidジョイントにコントローラーを追加", h=20)
-cmds.separator(h=5)
-
-# コントローラー名のprefixとsuffixの入力
-cmds.text("V_CollectJoint_Text", label="　★コントローラー作成", h=20, align='left')
-cmds.text("V_V_ControllerPreSuf_Text", label="　　☆オブジェクト先頭・末尾テキスト", h=30, align='left')
-
-# prefix
-cmds.rowLayout(f"V_ControllerPrefixRow{str(i)}", numberOfColumns=2)
-cmds.text("V_Controller_Prefix_Text", label="　　　Prefix : ", h=20, align='left')
-cmds.textField("V_Controller_Prefix", text="V_", w=100, h=20)
-cmds.setParent("..")
-
-# suffix
-cmds.rowLayout(f"V_ControllerSuffixRow{str(i)}", numberOfColumns=2)
-cmds.text("V_Controller_Suffix_Text", label="　　　Suffix : ", h=20, align='left')
-cmds.textField("V_Controller_Suffix", text="_Ctrl", w=100, h=20)
-cmds.setParent("..")
-
-# コントローラー半径を指定
-cmds.text("V_ControllerRadius_Text", label="　　☆コントローラー半径", h=30, align='left')
-cmds.intSliderGrp("V_Controller_RadiusSlider", label="　　　Radius : ", field=True, minValue=1, maxValue=10, value=1,
-                columnWidth3=[80, 100, 100], columnAlign3=["left", "left", "left"] )
-
-# コントローラーにRootを含めるか
-cmds.text("V_ControllerCheckBox_Text", label="　　☆詳細設定", h=30, align='left')
-cmds.rowLayout(f"V_ControllerCheckBoxRootRow{str(i)}", numberOfColumns=2)
-cmds.text("V_ControllerIsRoot_Space", label="　　　", align='left')
-cmds.checkBox("V_ControllerIsRoot", label="Rootを含める", align='left', value=True)
-cmds.setParent("..")
-
-# コントローラーに指ジョイントを含めるか
-cmds.rowLayout(f"V_ControllerCheckBoxFingerRow{str(i)}", numberOfColumns=2)
-cmds.text("V_ControllerIsFinger_Space", label="　　　", align='left')
-cmds.checkBox("V_ControllerIsFinger", label="指ジョイントを含める",  align='left', value=True)
-cmds.setParent("..")
-
-# ボタン
-cmds.separator(h=5)
-cmds.button("V_Controller_Button", label="コントローラーを作成", w=25, h=25, command=lambda *args:createController())
-
-# ログ
-cmds.text("V_Controller_LogText", label="　★ログ", h=30, align='left')
-cmds.scrollField("V_Controller_Log", text="", h=250, editable=False)
-cmds.button("V_Controller_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_Controller_Log"))
-
-# レイアウトから出る
-cmds.setParent("..")
-
-# --------------------
-# コントローラーの選択状態を制御
-# --------------------
-# レイアウトを作成してタブに挿入
-cmds.columnLayout("V_Select", adjustableColumn=True)
-cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Select", u"Select Controller")])
-
-# ヘッダテキスト
-cmds.text("V_Select_Header_1", label="Select Controller", h=20)
-cmds.text("V_Select_Header_2", label="コントローラーの選択状態を制御", h=20)
-cmds.separator(h=5)
-
-cmds.frameLayout("V_SelectFrame", label="Base", collapsable=True)
-
-cmds.rowLayout("V_SelectCenterRow", numberOfColumns=3)
-cmds.text("V_Select", label="　　", h=30, align='left')
-cmds.button(f"V_Select{KEY_NAMES[0]}Button", label=KEY_NAMES[0], w=100, h=30, command=lambda *args:selectController(KEY_NAMES[0]))
-cmds.button(f"V_Select{KEY_NAMES[1]}Button", label=KEY_NAMES[1], w=100, h=30, command=lambda *args:selectController(KEY_NAMES[1]))
-cmds.setParent("..")
-
-cmds.setParent("..")
-
-cmds.separator(h=5)
-
-# ログ
-cmds.text("V_Select_LogText", label="　★ログ", h=30, align='left')
-cmds.scrollField("V_Select_Log", text="", h=60, editable=False)
-cmds.button("V_Select_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_Select_Log"))
-
-# レイアウトから出る
-cmds.setParent("..")
-
-# --------------------
-# UIを表示する
-# --------------------
-cmds.setParent("..")
-cmds.showWindow(window)
-
 # --------------------
 # ジョイントの有無を判定
 # --------------------
@@ -758,6 +596,25 @@ def isFingerJoint(str):
     return False
 
 # --------------------
+# コントローラー選択ボタンUIの作成
+# 引数：UIのID, ボタン数, ループを開始する配列番号
+# --------------------
+def createSelectButton(num, idOffset, row):
+
+    cmds.rowLayout(f"V_SelectCenterRow{num}", numberOfColumns=row + 1)
+
+    # ボタン開始位置をずらす空白テキスト
+    cmds.text(f"V_SelectBlankCenter{num}", label="　　", h=20, align='left')
+
+    for i in range(row):
+        i += idOffset
+
+        cmds.button(f"V_Select{KEY_NAMES[i]}Button", label=KEY_NAMES[i], w=80, h=20, command=lambda *args, i=i:selectController(KEY_NAMES[i]))
+        print(KEY_NAMES[i])
+
+    cmds.setParent("..")
+
+# --------------------
 # コントローラーの選択状態制御
 # --------------------
 def selectController(str):
@@ -819,6 +676,11 @@ def reconnectController(nurbs):
             # キー名の文字列が含まれているコントローラーおよびグループを取得する
             for ctrl in ctrls:
                 if target in ctrl:
+
+                    # Chestと間違えてUpperChestを持ってこないようにする
+                    if target == "Chest" and "UpperChest" in ctrl:
+                        continue
+
                     # コントローラーの親となるグループの名前を取得
                     grp = cmds.listRelatives(ctrl, parent=True, fullPath=False)
                     grpName = grp[0]
@@ -848,8 +710,7 @@ def updateSelectButton():
     ACTIVE_COLOR = [0.3, 0.4, 0.5]
     DEFAULT_COLOR = [0.365, 0.365, 0.365]
 
-    #for i in range(len(V_JOINTS)):
-    for i in range(2):
+    for i in range(len(V_JOINTS)):
         if g_ctrlGrp[i].curveName in sel:
             cmds.button(f"V_Select{KEY_NAMES[i]}Button", edit=True, bgc=ACTIVE_COLOR)
         else:
@@ -883,9 +744,247 @@ def logClear(logItem):
     cmds.scrollField(logItem, edit=True, text="")
 
 # --------------------
+# ウィンドウ定義
+# --------------------
+windowID = "V_Window"
+
+if cmds.window(windowID, exists=True):
+    cmds.deleteUI(windowID)
+window = cmds.window(windowID, title="VRoid Animation", widthHeight=(400, 700))
+
+# --------------------
+# ツールをタブ切り替えに対応
+# --------------------
+cmds.tabLayout("V_ToolTab", innerMarginWidth=5, innerMarginHeight=5)
+
+# --------------------
+# 主要ジョイントのチェック
+# --------------------
+# レイアウトを作成してタブに挿入
+cmds.columnLayout("V_JointCheck", adjustableColumn=True)
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_JointCheck", u"Joint Check")])
+
+# ヘッダテキスト表示
+cmds.text("V_JointCheck_Header_1", label="Joint Check", h=20)
+cmds.text("V_JointCheck_Header_2", label="VRoidの主要ジョイントの有無をチェック", h=20)
+cmds.separator(h=5)
+
+# 見出しテキスト
+cmds.text("V_CollectJoint_Text", label="　★ジョイントを取得", h=20, align='left')
+
+# ジョイント数と判定結果を表示する
+cmds.rowLayout("V_JointRow" + str(i), numberOfColumns=2)
+cmds.text("V_JointCount_Value", label=f"　　--/{str(len(g_Joints))}", h=30, align='left')
+cmds.text("V_JointCount_Message", label="　Joint Undefined", h=30, align='left')
+cmds.setParent("..")
+cmds.separator(h=5)
+
+# スクロールレイアウトでジョイント状態を表示
+cmds.scrollLayout(childResizable=True)
+cmds.columnLayout(adjustableColumn=True, rowSpacing=0)
+
+# ジョイント有無の判定結果を表示する領域
+# [アイコン]部位 : ジョイント名
+for i in range(len(g_Joints)):
+    cmds.rowLayout(f"V_JointRow{str(i)}", numberOfColumns=3)
+    if g_Joints[i].enable == IsJoint(0):
+        cmds.image(f"V_IsEnable{str(i)}", image="error.png")
+    elif g_Joints[i].enable == IsJoint(1):
+        cmds.image(f"V_IsEnable{str(i)}", image="confirm.png")
+    else:
+        cmds.image(f"V_IsEnable{str(i)}", image="help.png")
+
+    cmds.text(f"V_JointKey{str(i)}", label=f"{g_Joints[i].jointKey} : ", h=16, align='left')
+    cmds.text(f"V_JointName{str(i)}", label=g_Joints[i].name, h=16, align='left')
+    cmds.setParent("..")
+cmds.setParent("..")
+cmds.setParent("..")
+
+# ボタン
+cmds.separator(h=5)
+cmds.button("V_CollectJoint_Button", label="ジョイントをチェック", w=25, h=25, command=lambda *args:collectJoint())
+
+# ログ
+cmds.text("V_JointCheck_LogText", label="　★ログ", h=30, align='left')
+cmds.scrollField("V_JointCheck_Log", text="", h=60, editable=False)
+cmds.button("V_JointCheck_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_JointCheck_Log"))
+
+# レイアウトから出る
+cmds.setParent("..")
+
+# --------------------
+# コントローラー作成
+# --------------------
+# レイアウトを作成してタブに挿入
+cmds.columnLayout("V_Controller", adjustableColumn=True)
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Controller", u"Create Controller")])
+
+# ヘッダテキスト
+cmds.text("V_Controller_Header_1", label="Create Controller", h=20)
+cmds.text("V_Controller_Header_2", label="VRoidジョイントにコントローラーを追加", h=20)
+cmds.separator(h=5)
+
+# コントローラー名のprefixとsuffixの入力
+cmds.text("V_CollectJoint_Text", label="　★コントローラー作成", h=20, align='left')
+cmds.text("V_V_ControllerPreSuf_Text", label="　　☆オブジェクト先頭・末尾テキスト", h=30, align='left')
+
+# prefix
+cmds.rowLayout(f"V_ControllerPrefixRow{str(i)}", numberOfColumns=2)
+cmds.text("V_Controller_Prefix_Text", label="　　　Prefix : ", h=20, align='left')
+cmds.textField("V_Controller_Prefix", text="V_", w=100, h=20)
+cmds.setParent("..")
+
+# suffix
+cmds.rowLayout(f"V_ControllerSuffixRow{str(i)}", numberOfColumns=2)
+cmds.text("V_Controller_Suffix_Text", label="　　　Suffix : ", h=20, align='left')
+cmds.textField("V_Controller_Suffix", text="_Ctrl", w=100, h=20)
+cmds.setParent("..")
+
+# コントローラー半径を指定
+cmds.text("V_ControllerRadius_Text", label="　　☆コントローラー半径", h=30, align='left')
+cmds.intSliderGrp("V_Controller_RadiusSlider", label="　　　Radius : ", field=True, minValue=1, maxValue=10, value=1,
+                columnWidth3=[80, 100, 100], columnAlign3=["left", "left", "left"] )
+
+# コントローラーにRootを含めるか
+cmds.text("V_ControllerCheckBox_Text", label="　　☆詳細設定", h=30, align='left')
+cmds.rowLayout(f"V_ControllerCheckBoxRootRow{str(i)}", numberOfColumns=2)
+cmds.text("V_ControllerIsRoot_Space", label="　　　", align='left')
+cmds.checkBox("V_ControllerIsRoot", label="Rootを含める", align='left', value=True)
+cmds.setParent("..")
+
+# コントローラーに指ジョイントを含めるか
+cmds.rowLayout(f"V_ControllerCheckBoxFingerRow{str(i)}", numberOfColumns=2)
+cmds.text("V_ControllerIsFinger_Space", label="　　　", align='left')
+cmds.checkBox("V_ControllerIsFinger", label="指ジョイントを含める",  align='left', value=True)
+cmds.setParent("..")
+
+# ボタン
+cmds.separator(h=5)
+cmds.button("V_Controller_Button", label="コントローラーを作成", w=25, h=25, command=lambda *args:createController())
+
+# ログ
+cmds.text("V_Controller_LogText", label="　★ログ", h=30, align='left')
+cmds.scrollField("V_Controller_Log", text="", h=250, editable=False)
+cmds.button("V_Controller_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_Controller_Log"))
+
+# レイアウトから出る
+cmds.setParent("..")
+
+# --------------------
+# コントローラーの選択状態を制御
+# --------------------
+# レイアウトを作成してタブに挿入
+cmds.columnLayout("V_Select", adjustableColumn=True)
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Select", u"Select Controller")])
+
+# ヘッダテキスト
+cmds.text("V_Select_Header_1", label="Select Controller", h=20)
+cmds.text("V_Select_Header_2", label="コントローラーの選択状態を制御", h=20)
+cmds.separator(h=5)
+
+# createSelectButtonに引数として渡すID,要素数,開始配列番号
+# 引数として渡す際に加算するため、明示的に指定する必要があるのはrowのみ
+num = 0
+row = 0
+idOffset = 0
+
+# 縦に長いためスクロールレイアウトを使う
+cmds.scrollLayout(childResizable=True)
+
+# センターラインのコントローラー群
+# 折り畳み可能なレイアウトにする
+cmds.frameLayout("V_SelectFrameCenter", label="Center", collapsable=True)
+# Root, Hips
+createSelectButton(num:= num + 1, idOffset, row:= 2)
+# Spine～UpperChest
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 3)
+# Neck, Head
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+cmds.setParent("..")
+
+# 肩～手首のコントローラー群
+cmds.frameLayout("V_SelectFrameUpperLimb", label="Upper Limb", collapsable=True)
+# Shoulder
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+# UpperArm
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+# LowerArm
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+# Hand
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+cmds.setParent("..")
+
+# 下半身のコントローラー群
+cmds.frameLayout("V_SelectFrameLowerLimb", label="Lower Limb", collapsable=True)
+# UpperLeg
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+# LowerLeg
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+# Foot
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+# Toes
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+cmds.setParent("..")
+
+# 親指のコントローラー群
+cmds.frameLayout("V_SelectFrameThumb", label="Thumb", collapsable=True)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+cmds.setParent("..")
+
+# 人差し指のコントローラー群
+cmds.frameLayout("V_SelectFrameIndex", label="Index", collapsable=True)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+cmds.setParent("..")
+
+# 中指のコントローラー群
+cmds.frameLayout("V_SelectFrameMiddle", label="Middle", collapsable=True)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+cmds.setParent("..")
+
+# 薬指のコントローラー群
+cmds.frameLayout("V_SelectFrameRing", label="Ring", collapsable=True)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+cmds.setParent("..")
+
+# 小指のコントローラー群
+cmds.frameLayout("V_SelectFrameLittle", label="Little", collapsable=True)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
+cmds.setParent("..")
+
+cmds.setParent("..")
+
+cmds.separator(h=5)
+
+# ログ
+cmds.text("V_Select_LogText", label="　★ログ", h=30, align='left')
+cmds.scrollField("V_Select_Log", text="", h=60, editable=False)
+cmds.button("V_Select_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_Select_Log"))
+
+# レイアウトから出る
+cmds.setParent("..")
+
+# --------------------
+# UIを表示する
+# --------------------
+cmds.setParent("..")
+cmds.showWindow(window)
+
+# --------------------
 # イベント登録
 # --------------------
+# 選択されたときおよび選択解除時に発火する
 V_SelectJobID_1 = cmds.scriptJob(event=["SelectionChanged", updateSelectButton],  parent=window)
 V_SelectJobID_2 = cmds.scriptJob(conditionFalse=["SomethingSelected", updateSelectButton], parent=window)
 
+# 起動時に初期化する
 updateSelectButton()
