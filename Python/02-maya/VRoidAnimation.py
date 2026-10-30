@@ -703,7 +703,8 @@ def updateSelectButton():
     # スクリプトを開く前にコントローラーが作成されていた場合はg_ctrlGrpに詰められていないため詰めなおす
     if not IS_CTRL_CONNECTED:
         nurbs = cmds.ls(type="nurbsCurve")
-        reconnectController(nurbs)
+        if nurbs:
+            reconnectController(nurbs)
 
     sel = cmds.ls(sl=True) or []
 
@@ -848,13 +849,13 @@ cmds.intSliderGrp("V_Controller_RadiusSlider", label="　　　Radius : ", field
 # コントローラーにRootを含めるか
 cmds.text("V_ControllerCheckBox_Text", label="　　☆詳細設定", h=30, align='left')
 cmds.rowLayout(f"V_ControllerCheckBoxRootRow{str(i)}", numberOfColumns=2)
-cmds.text("V_ControllerIsRoot_Space", label="　　　", align='left')
+cmds.text("V_ControllerIsRoot_Blank", label="　　　", align='left')
 cmds.checkBox("V_ControllerIsRoot", label="Rootを含める", align='left', value=True)
 cmds.setParent("..")
 
 # コントローラーに指ジョイントを含めるか
 cmds.rowLayout(f"V_ControllerCheckBoxFingerRow{str(i)}", numberOfColumns=2)
-cmds.text("V_ControllerIsFinger_Space", label="　　　", align='left')
+cmds.text("V_ControllerIsFinger_Blank", label="　　　", align='left')
 cmds.checkBox("V_ControllerIsFinger", label="指ジョイントを含める",  align='left', value=True)
 cmds.setParent("..")
 
@@ -889,73 +890,78 @@ row = 0
 idOffset = 0
 
 # 縦に長いためスクロールレイアウトを使う
-cmds.scrollLayout(childResizable=True)
+cmds.scrollLayout(h=500, childResizable=True)
 
 # センターラインのコントローラー群
 # 折り畳み可能なレイアウトにする
 cmds.frameLayout("V_SelectFrameCenter", label="Center", collapsable=True)
 # Root, Hips
+cmds.text("V_SelectCenter1", label="　★体幹", align='left')
 createSelectButton(num:= num + 1, idOffset, row:= 2)
 # Spine～UpperChest
+cmds.text("V_SelectCenter2", label="　★胴", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 3)
 # Neck, Head
+cmds.text("V_SelectCenter3", label="　★頭部", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 cmds.setParent("..")
 
 # 肩～手首のコントローラー群
 cmds.frameLayout("V_SelectFrameUpperLimb", label="Upper Limb", collapsable=True)
 # Shoulder
+cmds.text("V_SelectUpperLimb1", label="　★肩", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # UpperArm
+cmds.text("V_SelectUpperLimb2", label="　★上腕", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # LowerArm
+cmds.text("V_SelectUpperLimb3", label="　★下腕", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # Hand
+cmds.text("V_SelectUpperLimb4", label="　★手首", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 cmds.setParent("..")
 
 # 下半身のコントローラー群
 cmds.frameLayout("V_SelectFrameLowerLimb", label="Lower Limb", collapsable=True)
 # UpperLeg
+cmds.text("V_SelectLowerLimb1", label="　★大腿", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # LowerLeg
+cmds.text("V_SelectLowerLimb2", label="　★下肢", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # Foot
+cmds.text("V_SelectLowerLimb3", label="　★足", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # Toes
+cmds.text("V_SelectLowerLimb4", label="　★爪先", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 cmds.setParent("..")
 
-# 親指のコントローラー群
-cmds.frameLayout("V_SelectFrameThumb", label="Thumb", collapsable=True)
+# 指のコントローラー群
+cmds.frameLayout("V_SelectFrameFinger", label="Finger", collapsable=True)
+# Thumb
+cmds.text("V_SelectFinger1", label="　★親指", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
-cmds.setParent("..")
-
-# 人差し指のコントローラー群
-cmds.frameLayout("V_SelectFrameIndex", label="Index", collapsable=True)
+# Index
+cmds.text("V_SelectFinger2", label="　★人差し指", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
-cmds.setParent("..")
-
-# 中指のコントローラー群
-cmds.frameLayout("V_SelectFrameMiddle", label="Middle", collapsable=True)
+# Middle
+cmds.text("V_SelectFinger3", label="　★中指", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
-cmds.setParent("..")
-
-# 薬指のコントローラー群
-cmds.frameLayout("V_SelectFrameRing", label="Ring", collapsable=True)
+# Ring
+cmds.text("V_SelectFinger4", label="　★薬指", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
-cmds.setParent("..")
-
-# 小指のコントローラー群
-cmds.frameLayout("V_SelectFrameLittle", label="Little", collapsable=True)
+# Little
+cmds.text("V_SelectFinger5", label="　★小指", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
