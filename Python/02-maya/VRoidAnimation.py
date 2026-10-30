@@ -335,6 +335,27 @@ for i in range(len(V_JOINTS)):
 IS_CTRL_CONNECTED = False
 
 # --------------------
+# 選択状態監視ジョブの定義
+# --------------------
+# 初期化
+global V_SelectJobID_1
+if "V_SelectJobID_1" not in globals():
+    V_SelectJobID_1 = None
+
+global V_SelectJobID_2
+if "V_SelectJobID_2" not in globals():
+    V_SelectJobID_2 = None
+
+# 既にジョブが存在する場合は削除してクリーンにする
+if V_SelectJobID_1 and cmds.scriptJob(exists=V_SelectJobID_1):
+    cmds.scriptJob(kill=V_SelectJobID_1, force=True)
+    V_SelectJobID_1 = None
+
+if V_SelectJobID_2 and cmds.scriptJob(exists=V_SelectJobID_2):
+    cmds.scriptJob(kill=V_SelectJobID_2, force=True)
+    V_SelectJobID_2 = None
+
+# --------------------
 # ウィンドウ定義
 # --------------------
 windowID = "V_Window"
@@ -398,7 +419,7 @@ cmds.button("V_CollectJoint_Button", label="ジョイントをチェック", w=2
 # ログ
 cmds.text("V_JointCheck_LogText", label="　★ログ", h=30, align='left')
 cmds.scrollField("V_JointCheck_Log", text="", h=60, editable=False)
-cmds.button("V_JointCheck_LogClear", label="ログをクリア", h=25, backgroundColor=[0.3, 0.4, 0.5], command=lambda *args:logClear("V_JointCheck_Log"))
+cmds.button("V_JointCheck_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_JointCheck_Log"))
 
 # レイアウトから出る
 cmds.setParent("..")
@@ -473,15 +494,17 @@ cmds.text("V_Select_Header_1", label="Select Controller", h=20)
 cmds.text("V_Select_Header_2", label="コントローラーの選択状態を制御", h=20)
 cmds.separator(h=5)
 
-cmds.frameLayout("V_SelectFrame", label="上半身", collapsable=True)
+cmds.frameLayout("V_SelectFrame", label="Base", collapsable=True)
 
 cmds.rowLayout("V_SelectCenterRow", numberOfColumns=3)
-cmds.text("V_Select", label="　　　", h=30, align='left')
-cmds.button("V_SelectRootButton", label=KEY_NAMES[0], w=100, h=30, command=lambda *args:selectController(KEY_NAMES[0]))
-cmds.button("V_SelectHipsButton", label=KEY_NAMES[1], w=100, h=30, command=lambda *args:selectController(KEY_NAMES[1]))
+cmds.text("V_Select", label="　　", h=30, align='left')
+cmds.button(f"V_Select{KEY_NAMES[0]}Button", label=KEY_NAMES[0], w=100, h=30, command=lambda *args:selectController(KEY_NAMES[0]))
+cmds.button(f"V_Select{KEY_NAMES[1]}Button", label=KEY_NAMES[1], w=100, h=30, command=lambda *args:selectController(KEY_NAMES[1]))
 cmds.setParent("..")
 
 cmds.setParent("..")
+
+cmds.separator(h=5)
 
 # ログ
 cmds.text("V_Select_LogText", label="　★ログ", h=30, align='left')
@@ -748,9 +771,6 @@ def selectController(str):
         addLog(f"Error : コントローラーが作成されていません\nCreate Controllerタブからコントローラーを作成してください", "V_Select_Log")
         return
 
-    # スクリプトを開く前にコントローラーが作成されていた場合はg_ctrlGrpに詰められていないため詰めなおす
-    reconnectController(nurbs)
-
     # ターゲットのコントローラー名を取得
     ctrl = g_ctrlGrp[KEY_NAMES.index(str)].curveName
 
@@ -760,21 +780,23 @@ def selectController(str):
         addLog(f"Error : {str} のコントローラーが存在しません", "V_Select_Log")
         return
 
+    # ターゲットのコントローラーが選択されているか取得
     sel = cmds.ls(selection=True)
     isSel = False
-
     if ctrl in sel:
         isSel = True
 
-    # Altキーが押されている場合は追加選択する
+    # Altキーが押されている場合は追加選択し、既に選択されているなら選択解除する
     # アウトライナ上と同様の操作感にする
     cmds.select(ctrl, add=isAltPressed, deselect=isSel)
 
+    # ログ出力
     if not isSel:
         addLog(f"Success : {ctrl} を選択しました", "V_Select_Log")
     else:
         addLog(f"Success : {ctrl} の選択を解除しました", "V_Select_Log")
 
+    # 今選択されているオブジェクトを出力
     sel = cmds.ls(selection=True)
     addLog(f"選択中 : {sel}", "V_Select_Log")
 
@@ -811,6 +833,29 @@ def reconnectController(nurbs):
         addLog(f"Reconnect : 作成済みコントローラーを再接続しました", "V_Select_Log")
 
 # --------------------
+# コントローラー選択状態に応じてボタン色を変更
+# --------------------
+def updateSelectButton():
+    global IS_CTRL_CONNECTED
+
+    # スクリプトを開く前にコントローラーが作成されていた場合はg_ctrlGrpに詰められていないため詰めなおす
+    if not IS_CTRL_CONNECTED:
+        nurbs = cmds.ls(type="nurbsCurve")
+        reconnectController(nurbs)
+
+    sel = cmds.ls(sl=True) or []
+
+    ACTIVE_COLOR = [0.3, 0.4, 0.5]
+    DEFAULT_COLOR = [0.365, 0.365, 0.365]
+
+    #for i in range(len(V_JOINTS)):
+    for i in range(2):
+        if g_ctrlGrp[i].curveName in sel:
+            cmds.button(f"V_Select{KEY_NAMES[i]}Button", edit=True, bgc=ACTIVE_COLOR)
+        else:
+            cmds.button(f"V_Select{KEY_NAMES[i]}Button", edit=True, bgc=DEFAULT_COLOR)
+
+# --------------------
 # マルチバイト文字を判定
 # --------------------
 def isMultiByte(str):
@@ -836,3 +881,11 @@ def addLog(newText, logItem):
 # --------------------
 def logClear(logItem):
     cmds.scrollField(logItem, edit=True, text="")
+
+# --------------------
+# イベント登録
+# --------------------
+V_SelectJobID_1 = cmds.scriptJob(event=["SelectionChanged", updateSelectButton],  parent=window)
+V_SelectJobID_2 = cmds.scriptJob(conditionFalse=["SomethingSelected", updateSelectButton], parent=window)
+
+updateSelectButton()
