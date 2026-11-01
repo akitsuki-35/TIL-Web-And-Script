@@ -609,8 +609,8 @@ def createSelectButton(num, idOffset, row):
     for i in range(row):
         i += idOffset
 
-        cmds.button(f"V_Select{KEY_NAMES[i]}Button", label=KEY_NAMES[i], w=80, h=20, command=lambda *args, i=i:selectController(KEY_NAMES[i]))
-        print(KEY_NAMES[i])
+        cmds.button(f"V_Select{KEY_NAMES[i]}Button", label=KEY_NAMES[i], w=80, h=20,
+                    command=lambda *args, i=i:selectController(KEY_NAMES[i]))
 
     cmds.setParent("..")
 
@@ -618,9 +618,9 @@ def createSelectButton(num, idOffset, row):
 # コントローラーの選択状態制御
 # --------------------
 def selectController(str):
-    # Altキーが押されているかを取得
+    # ctrlキー・Shiftキーが押されているかを取得
     mods = cmds.getModifiers()
-    isAltPressed = (mods & 8) > 0
+    isCtrlShiftPressed = (mods & 1) > 0 or (mods & 4) > 0
 
     # コントローラーが作成済みか取得
     nurbs = cmds.ls(type="nurbsCurve")
@@ -643,9 +643,9 @@ def selectController(str):
     if ctrl in sel:
         isSel = True
 
-    # Altキーが押されている場合は追加選択し、既に選択されているなら選択解除する
+    # ctrlキー・Shiftキーが押されている場合は追加選択し、既に選択されているなら選択解除する
     # アウトライナ上と同様の操作感にする
-    cmds.select(ctrl, add=isAltPressed, deselect=isSel)
+    cmds.select(ctrl, add=isCtrlShiftPressed, deselect=isSel)
 
     # ログ出力
     if not isSel:
@@ -881,6 +881,10 @@ cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Select", u"Select Controlle
 # ヘッダテキスト
 cmds.text("V_Select_Header_1", label="Select Controller", h=20)
 cmds.text("V_Select_Header_2", label="コントローラーの選択状態を制御", h=20)
+cmds.separator(h=5)
+
+# 選択解除
+cmds.button("V_SelectClear_Button", label="全ての選択を解除", h=25, command=lambda *args:cmds.select(clear=True))
 cmds.separator(h=5)
 
 # createSelectButtonに引数として渡すID,要素数,開始配列番号
