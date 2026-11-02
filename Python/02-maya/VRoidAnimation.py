@@ -316,11 +316,13 @@ for i in range(len(V_JOINTS)):
 @dataclass
 class Controller:
     jointKey: str # 部位名（インデックスとして使用）
+    jointName : str # 実ジョイント名（定数を使用）
     curveName: str # コントローラー名
     grpName: str # グループ名
 
-    def __init__(self, enable=IsJoint(-1), jointKey="", curveName="", grpName=""):
+    def __init__(self, jointKey="", jointName="",  curveName="", grpName=""):
         self.jointKey = jointKey
+        self.jointName = jointName
         self.curveName = curveName
         self.grpName = grpName
 
@@ -328,7 +330,7 @@ class Controller:
 # キーとして部位名を渡し、カーブまたはグループを取得
 g_ctrlGrp = [Controller()] * len(V_JOINTS)
 for i in range(len(V_JOINTS)):
-    g_ctrlGrp[i] = Controller(jointKey=KEY_NAMES[i], curveName="", grpName="")
+    g_ctrlGrp[i] = Controller(jointKey=KEY_NAMES[i], jointName=V_JOINTS[i], curveName="", grpName="")
 
 # コントローラーがスクリプトに接続済みか（g_ctrlGrpに詰められているか）
 # コントローラー作成後にスクリプトを閉じるとg_ctrlGrpが空になるため、再接続が必要
@@ -600,7 +602,6 @@ def isFingerJoint(str):
 # 引数：UIのID, ボタン数, ループを開始する配列番号
 # --------------------
 def createSelectButton(num, idOffset, row):
-
     cmds.rowLayout(f"V_SelectCenterRow{num}", numberOfColumns=row + 1)
 
     # ボタン開始位置をずらす空白テキスト
@@ -718,6 +719,81 @@ def updateSelectButton():
             cmds.button(f"V_Select{KEY_NAMES[i]}Button", edit=True, bgc=DEFAULT_COLOR)
 
 # --------------------
+# キーフレームが打たれているコントローラーを収集
+# --------------------
+def collectAnimation():
+    animCtrls = []
+
+    # キーが打たれているコントローラーをリストに詰める
+    for i in range(len(g_ctrlGrp)):
+        ctrl = g_ctrlGrp[i].curveName
+
+        # キーフレーム取得
+        key = cmds.keyframe(ctrl, query=True, keyframeCount=True) or 0
+
+        # 1以上あるならリストに詰める
+        if key > 0:
+            animCtrls.append(ctrl)
+
+    # ログ出力
+    if len(animCtrls) > 0:
+        addLog(f"Result : アニメーションが存在\n{animCtrls}", "V_AddTimeEditor_Log")
+    else:
+        addLog(f"Result : アニメーションが存在しません", "V_AddTimeEditor_Log")
+
+    return animCtrls
+
+# --------------------
+# コントローラーをタイムエディタに登録
+# --------------------
+def addTimeEditor():
+    # キーが存在するコントローラーを取得
+    animCtrls = collectAnimation()
+
+    # キーが存在しない場合はそれ以上処理しない
+    if not animCtrls:
+        addLog("Error : アニメーションが存在しないため、処理がスキップされました", "V_AddTimeEditor_Log")
+        return
+
+    # アニメーション名をコンポジションとトラックの名前にする
+    animName = cmds.textField("V_AddTimeEditor_Name", query=True, text=True)
+
+    try:
+        # コンポジションが存在しなければ新規作成
+        comps = cmds.timeEditorComposition(query=True, allCompositions=True) or []
+        if animName in comps:
+            cmds.timeEditorComposition(animName, edit=True, active=True)
+            addLog(f"Log : コンポジションを{animName}に切り替えました", "V_AddTimeEditor_Log")
+        else:
+            cmds.timeEditorComposition(animName, active=True)
+            addLog(f"Log : コンポジション{animName}を新規作成しました", "V_AddTimeEditor_Log")
+
+        # アニメーショントラックを作成
+        cmds.timeEditorTracks(animName, edit=True, addTrack=1, trackName=animName)
+
+        # パスを生成
+        trackPath = f"{animName}|{animName}"
+
+        # キーのあるコントローラーのみを選択する
+        cmds.select(clear=True)
+        cmds.select(animCtrls)
+
+        # 開始フレームと終了フレームを取得
+        start = cmds.playbackOptions(query=True, minTime=True)
+
+        # タイムエディタにアニメーションクリップを登録
+        cmds.timeEditorClip(animName, addSelectedObjects=True, track=trackPath, startTime=start)
+
+        addLog(f"Success : クリップ{animName}をコンポジションに登録しました", "V_AddTimeEditor_Log")
+        return
+    except Exception as e:
+        addLog(f"Error : コンポジションへの登録に失敗しました\n{str(e)}", "V_AddTimeEditor_Log")
+        return
+    finally:
+        # 最後に選択を全て解除する
+        cmds.select(clear=True)
+
+# --------------------
 # マルチバイト文字を判定
 # --------------------
 def isMultiByte(str):
@@ -749,9 +825,13 @@ def logClear(logItem):
 # --------------------
 windowID = "V_Window"
 
+# ウィンドウが開かれていたら片付ける
 if cmds.window(windowID, exists=True):
     cmds.deleteUI(windowID)
-window = cmds.window(windowID, title="VRoid Animation", widthHeight=(400, 700))
+
+# サイズを固定
+window = cmds.window(windowID, title="VRoid Animation", sizeable=False)
+cmds.window(window, edit=True, widthHeight=(500, 750))
 
 # --------------------
 # ツールをタブ切り替えに対応
@@ -763,10 +843,10 @@ cmds.tabLayout("V_ToolTab", innerMarginWidth=5, innerMarginHeight=5)
 # --------------------
 # レイアウトを作成してタブに挿入
 cmds.columnLayout("V_JointCheck", adjustableColumn=True)
-cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_JointCheck", u"Joint Check")])
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_JointCheck", u"ジョイント取得")])
 
 # ヘッダテキスト表示
-cmds.text("V_JointCheck_Header_1", label="Joint Check", h=20)
+cmds.text("V_JointCheck_Header_1", label="Joint Check", h=20, font="boldLabelFont")
 cmds.text("V_JointCheck_Header_2", label="VRoidの主要ジョイントの有無をチェック", h=20)
 cmds.separator(h=5)
 
@@ -818,10 +898,10 @@ cmds.setParent("..")
 # --------------------
 # レイアウトを作成してタブに挿入
 cmds.columnLayout("V_Controller", adjustableColumn=True)
-cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Controller", u"Create Controller")])
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Controller", u"CTRL作成")])
 
 # ヘッダテキスト
-cmds.text("V_Controller_Header_1", label="Create Controller", h=20)
+cmds.text("V_Controller_Header_1", label="Create Controller", h=20, font="boldLabelFont")
 cmds.text("V_Controller_Header_2", label="VRoidジョイントにコントローラーを追加", h=20)
 cmds.separator(h=5)
 
@@ -830,13 +910,13 @@ cmds.text("V_CollectJoint_Text", label="　★コントローラー作成", h=20
 cmds.text("V_V_ControllerPreSuf_Text", label="　　☆オブジェクト先頭・末尾テキスト", h=30, align='left')
 
 # prefix
-cmds.rowLayout(f"V_ControllerPrefixRow{str(i)}", numberOfColumns=2)
+cmds.rowLayout("V_ControllerPrefixRow", numberOfColumns=2)
 cmds.text("V_Controller_Prefix_Text", label="　　　Prefix : ", h=20, align='left')
 cmds.textField("V_Controller_Prefix", text="V_", w=100, h=20)
 cmds.setParent("..")
 
 # suffix
-cmds.rowLayout(f"V_ControllerSuffixRow{str(i)}", numberOfColumns=2)
+cmds.rowLayout("V_ControllerSuffixRow", numberOfColumns=2)
 cmds.text("V_Controller_Suffix_Text", label="　　　Suffix : ", h=20, align='left')
 cmds.textField("V_Controller_Suffix", text="_Ctrl", w=100, h=20)
 cmds.setParent("..")
@@ -848,13 +928,13 @@ cmds.intSliderGrp("V_Controller_RadiusSlider", label="　　　Radius : ", field
 
 # コントローラーにRootを含めるか
 cmds.text("V_ControllerCheckBox_Text", label="　　☆詳細設定", h=30, align='left')
-cmds.rowLayout(f"V_ControllerCheckBoxRootRow{str(i)}", numberOfColumns=2)
+cmds.rowLayout("V_ControllerCheckBoxRootRow", numberOfColumns=2)
 cmds.text("V_ControllerIsRoot_Blank", label="　　　", align='left')
 cmds.checkBox("V_ControllerIsRoot", label="Rootを含める", align='left', value=True)
 cmds.setParent("..")
 
 # コントローラーに指ジョイントを含めるか
-cmds.rowLayout(f"V_ControllerCheckBoxFingerRow{str(i)}", numberOfColumns=2)
+cmds.rowLayout("V_ControllerCheckBoxFingerRow", numberOfColumns=2)
 cmds.text("V_ControllerIsFinger_Blank", label="　　　", align='left')
 cmds.checkBox("V_ControllerIsFinger", label="指ジョイントを含める",  align='left', value=True)
 cmds.setParent("..")
@@ -876,10 +956,10 @@ cmds.setParent("..")
 # --------------------
 # レイアウトを作成してタブに挿入
 cmds.columnLayout("V_Select", adjustableColumn=True)
-cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Select", u"Select Controller")])
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Select", u"CTRL選択")])
 
 # ヘッダテキスト
-cmds.text("V_Select_Header_1", label="Select Controller", h=20)
+cmds.text("V_Select_Header_1", label="Select Controller", h=20, font="boldLabelFont")
 cmds.text("V_Select_Header_2", label="コントローラーの選択状態を制御", h=20)
 cmds.separator(h=5)
 
@@ -984,13 +1064,55 @@ cmds.button("V_Select_LogClear", label="ログをクリア", h=25, command=lambd
 cmds.setParent("..")
 
 # --------------------
+# タイムエディタにアニメーションを登録
+# --------------------
+# レイアウトを作成してタブに挿入
+cmds.columnLayout("V_AddTimeEditor", adjustableColumn=True)
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_AddTimeEditor", u"TE登録")])
+
+# ヘッダテキスト
+cmds.text("V_AddTimeEditor_Header_1", label="Add TimeEditor", h=20, font="boldLabelFont")
+cmds.text("V_AddTimeEditor_Header_2", label="アニメーションをタイムエディタに登録", h=20)
+cmds.separator(h=5)
+
+# アニメーションが存在するか取得
+cmds.button("V_collectAnimation_Button", label="アニメーション取得", w=25, h=25, command=lambda *args:collectAnimation())
+cmds.separator(h=5)
+
+# アニメーション名設定
+cmds.text("V_AddTimeEditorName_Text", label="　★アニメーション名入力", h=20, align='left')
+cmds.rowLayout("V_AddTimeEditorNameRow", numberOfColumns=2)
+cmds.text("V_AddTimeEditorName_Blank", label="　　", h=20, align='left')
+cmds.textField("V_AddTimeEditor_Name", text="Anim", w=100, h=20)
+cmds.setParent("..")
+
+# 初期姿勢に戻すか
+cmds.text("V_AddTimeEditorCheckBox_Text", label="　★出力設定", h=30, align='left')
+cmds.rowLayout("V_AddTimeEditorCheckBoxRootRow", numberOfColumns=2)
+cmds.text("V_AddTimeEditorCheckBox_Blank", label="　　", align='left')
+cmds.checkBox("V_AddTimeEditorIsBindPause", label="出力後に初期姿勢に戻す", align='left', value=True)
+cmds.setParent("..")
+
+# タイムエディタに登録
+cmds.separator(h=5)
+cmds.button("V_AddTimeEditor_Button", label="タイムエディタに登録", w=25, h=25, command=lambda *args:addTimeEditor())
+
+# ログ
+cmds.text("V_AddTimeEditor_LogText", label="　★ログ", h=30, align='left')
+cmds.scrollField("V_AddTimeEditor_Log", text="", h=60, editable=False)
+cmds.button("V_AddTimeEditor_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_AddTimeEditor_Log"))
+
+# レイアウトから出る
+cmds.setParent("..")
+
+# --------------------
 # UIを表示する
 # --------------------
 cmds.setParent("..")
 cmds.showWindow(window)
 
 # --------------------
-# イベント登録
+# イベント登録・初期化処理
 # --------------------
 # 選択されたときおよび選択解除時に発火する
 V_SelectJobID_1 = cmds.scriptJob(event=["SelectionChanged", updateSelectButton],  parent=window)
