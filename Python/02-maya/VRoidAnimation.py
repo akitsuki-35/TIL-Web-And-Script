@@ -2,10 +2,11 @@
     # file    : VRoidAnimation.py
     # brief   : VRoidモデルのアニメーション制作補助
     # author  : @akitsuki-35（https://github.com/akitsuki-35）
-    # date    : 2026/10/30
-    # updated : 2026/10/30
+    # date    : 2026/11/03
+    # updated : 2026/11/03
 #===========================================================
 import maya.cmds as cmds
+import maya.mel as mel
 from enum import Enum
 from dataclasses import dataclass
 
@@ -425,7 +426,7 @@ def createController():
     if (collectJoint()):
         addLog(f"Success : JointCheck OK!", "V_Controller_Log")
     else:
-        addLog(f"Error : ジョイントが正常ではありません\nJoint Checkのタブを確認してください", "V_Controller_Log")
+        addLog(f"Error : ジョイントが正常ではありません\n[ジョイント取得]タブを確認してください", "V_Controller_Log")
         return
 
     # コントローラー名のprefixとsuffixを取得
@@ -447,22 +448,8 @@ def createController():
     # コントローラー半径を取得
     radius = cmds.intSliderGrp("V_Controller_RadiusSlider", query=True, value=True)
 
-    # ルートジョイント・指ジョイントを含める設定を取得
-    isRoot = cmds.checkBox("V_ControllerIsRoot", query=True, value=True)
-    isFinger = cmds.checkBox("V_ControllerIsFinger", query=True, value=True)
-
     # 全ての主要ジョイントのコントローラーとグループを作成
     for i, name in enumerate(V_JOINTS):
-        # ルートジョイントを含めない設定の場合はルートジョイントのコントローラー作成をスキップ
-        if(name == JOINT_ROOT):
-            if(not isRoot):
-                continue
-
-        # 指ジョイントを含めない設定の場合は指ジョイントのコントローラー作成をスキップ
-        if(isFingerJoint(name)):
-            if(not isFinger):
-                continue
-
         # VRoidデフォルトジョイント名と一致するジョイントを取得
         joint = cmds.ls(name, type="joint")
 
@@ -493,9 +480,9 @@ def createController():
 
             # 結果に応じてログ出力
             if(cmds.ls(itemName)):
-                addLog(f"Success : Create Success {ctrl}", "V_Controller_Log")
+                addLog(f"Success : Create Success [{ctrl}]", "V_Controller_Log")
             else:
-                addLog(f"Error : Create Failed {ctrl}", "V_Controller_Log")
+                addLog(f"Error : Create Failed [{ctrl}]", "V_Controller_Log")
         else:
             # ジョイントが存在しない場合はエラーログを出して次の処理へ
             # ただし全ジョイントが取得できないとそもそも処理されないので保険
@@ -509,43 +496,41 @@ def createController():
     # VRoidモデルの実ジョイントと同じ階層構造を構築
     # コントローラーも階層にしないとモデルが正しく動かない
     # --------------------
-    # 指ジョイントコントローラーを作成した場合は、先に指コントローラーの階層構造を作成
-    if(isFinger):
-        # 左手の先→中→付け根
-        createParent("L_Thumb3", "L_Thumb2")
-        createParent("L_Thumb2", "L_Thumb1")
-        createParent("L_Index3", "L_Index2")
-        createParent("L_Index2", "L_Index1")
-        createParent("L_Middle3", "L_Middle2")
-        createParent("L_Middle2", "L_Middle1")
-        createParent("L_Ring3", "L_Ring2")
-        createParent("L_Ring2", "L_Ring1")
-        createParent("L_Little3", "L_Little2")
-        createParent("L_Little2", "L_Little1")
+    # 左手の先→中→付け根
+    createParent("L_Thumb3", "L_Thumb2")
+    createParent("L_Thumb2", "L_Thumb1")
+    createParent("L_Index3", "L_Index2")
+    createParent("L_Index2", "L_Index1")
+    createParent("L_Middle3", "L_Middle2")
+    createParent("L_Middle2", "L_Middle1")
+    createParent("L_Ring3", "L_Ring2")
+    createParent("L_Ring2", "L_Ring1")
+    createParent("L_Little3", "L_Little2")
+    createParent("L_Little2", "L_Little1")
 
-        # 右手の先→中→付け根
-        createParent("R_Thumb3", "R_Thumb2")
-        createParent("R_Thumb2", "R_Thumb1")
-        createParent("R_Index3", "R_Index2")
-        createParent("R_Index2", "R_Index1")
-        createParent("R_Middle3", "R_Middle2")
-        createParent("R_Middle2", "R_Middle1")
-        createParent("R_Ring3", "R_Ring2")
-        createParent("R_Ring2", "R_Ring1")
-        createParent("R_Little3", "R_Little2")
-        createParent("R_Little2", "R_Little1")
+    # 右手の先→中→付け根
+    createParent("R_Thumb3", "R_Thumb2")
+    createParent("R_Thumb2", "R_Thumb1")
+    createParent("R_Index3", "R_Index2")
+    createParent("R_Index2", "R_Index1")
+    createParent("R_Middle3", "R_Middle2")
+    createParent("R_Middle2", "R_Middle1")
+    createParent("R_Ring3", "R_Ring2")
+    createParent("R_Ring2", "R_Ring1")
+    createParent("R_Little3", "R_Little2")
+    createParent("R_Little2", "R_Little1")
 
-        # それぞれの指コントローラーを左右の手首コントローラーの子にする
-        createParent("L_Thumb1", "L_Hand")
-        createParent("L_Index1", "L_Hand")
-        createParent("L_Middle1", "L_Hand")
-        createParent("L_Ring1", "L_Hand")
-        createParent("L_Little1", "L_Hand")
-        createParent("R_Thumb1", "R_Hand")
-        createParent("R_Index1", "R_Hand")
-        createParent("R_Middle1", "R_Hand")
-        createParent("R_Ring1", "R_Hand")
-        createParent("R_Little1", "R_Hand")
+    # それぞれの指コントローラーを左右の手首コントローラーの子にする
+    createParent("L_Thumb1", "L_Hand")
+    createParent("L_Index1", "L_Hand")
+    createParent("L_Middle1", "L_Hand")
+    createParent("L_Ring1", "L_Hand")
+    createParent("L_Little1", "L_Hand")
+    createParent("R_Thumb1", "R_Hand")
+    createParent("R_Index1", "R_Hand")
+    createParent("R_Middle1", "R_Hand")
+    createParent("R_Ring1", "R_Hand")
+    createParent("R_Little1", "R_Hand")
 
     # 上半身
     createParent("Head", "Neck")
@@ -576,9 +561,8 @@ def createController():
     createParent("L_UpperLeg", "Hips")
     createParent("R_UpperLeg", "Hips")
 
-    # ルートのコントローラーを作成した場合は、Hipsをルートの子にする
-    if(isRoot):
-        createParent("Hips", "Root")
+    # Hipsをルートの子にする
+    createParent("Hips", "Root")
 
 # --------------------
 # 階層構造作成サブ関数（グループをコントローラーの子にする）
@@ -626,7 +610,7 @@ def selectController(str):
     # コントローラーが作成済みか取得
     nurbs = cmds.ls(type="nurbsCurve")
     if not nurbs:
-        addLog(f"Error : コントローラーが作成されていません\nCreate Controllerタブからコントローラーを作成してください", "V_Select_Log")
+        addLog(f"Error : コントローラーが作成されていません\n[CTRL作成]タブからコントローラーを作成してください", "V_Select_Log")
         return
 
     # ターゲットのコントローラー名を取得
@@ -650,9 +634,9 @@ def selectController(str):
 
     # ログ出力
     if not isSel:
-        addLog(f"Success : {ctrl} を選択しました", "V_Select_Log")
+        addLog(f"Success : [{ctrl}]を選択しました", "V_Select_Log")
     else:
-        addLog(f"Success : {ctrl} の選択を解除しました", "V_Select_Log")
+        addLog(f"Success : [{ctrl}]の選択を解除しました", "V_Select_Log")
 
     # 今選択されているオブジェクトを出力
     sel = cmds.ls(selection=True)
@@ -728,6 +712,11 @@ def collectAnimation():
     for i in range(len(g_ctrlGrp)):
         ctrl = g_ctrlGrp[i].curveName
 
+        # コントローラー自体が存在しない場合は弾く
+        if not cmds.objExists(ctrl):
+            addLog(f"Error : コントローラーが作成されていません\n[CTRL作成]タブからコントローラーを作成してください", "V_AddTimeEditor_Log")
+            return
+
         # キーフレーム取得
         key = cmds.keyframe(ctrl, query=True, keyframeCount=True) or 0
 
@@ -738,22 +727,24 @@ def collectAnimation():
     # ログ出力
     if len(animCtrls) > 0:
         addLog(f"Result : アニメーションが存在\n{animCtrls}", "V_AddTimeEditor_Log")
+        return True
     else:
         addLog(f"Result : アニメーションが存在しません", "V_AddTimeEditor_Log")
-
-    return animCtrls
+        return False
 
 # --------------------
 # コントローラーをタイムエディタに登録
 # --------------------
 def addTimeEditor():
-    # キーが存在するコントローラーを取得
-    animCtrls = collectAnimation()
-
-    # キーが存在しない場合はそれ以上処理しない
-    if not animCtrls:
+    # コントローラーまたはキーが存在しない場合はそれ以上処理しない
+    if not collectAnimation():
         addLog("Error : アニメーションが存在しないため、処理がスキップされました", "V_AddTimeEditor_Log")
         return
+
+    # 全コントローラーを取得
+    ctrls = []
+    for i in range(len(g_ctrlGrp)):
+        ctrls.append(g_ctrlGrp[i].curveName)
 
     # アニメーション名をコンポジションとトラックの名前にする
     animName = cmds.textField("V_AddTimeEditor_Name", query=True, text=True)
@@ -774,9 +765,9 @@ def addTimeEditor():
         # パスを生成
         trackPath = f"{animName}|{animName}"
 
-        # キーのあるコントローラーのみを選択する
+        # コントローラーを選択する
         cmds.select(clear=True)
-        cmds.select(animCtrls)
+        cmds.select(ctrls)
 
         # 開始フレームと終了フレームを取得
         start = cmds.playbackOptions(query=True, minTime=True)
@@ -926,19 +917,6 @@ cmds.text("V_ControllerRadius_Text", label="　　☆コントローラー半径
 cmds.intSliderGrp("V_Controller_RadiusSlider", label="　　　Radius : ", field=True, minValue=1, maxValue=10, value=1,
                 columnWidth3=[80, 100, 100], columnAlign3=["left", "left", "left"] )
 
-# コントローラーにRootを含めるか
-cmds.text("V_ControllerCheckBox_Text", label="　　☆詳細設定", h=30, align='left')
-cmds.rowLayout("V_ControllerCheckBoxRootRow", numberOfColumns=2)
-cmds.text("V_ControllerIsRoot_Blank", label="　　　", align='left')
-cmds.checkBox("V_ControllerIsRoot", label="Rootを含める", align='left', value=True)
-cmds.setParent("..")
-
-# コントローラーに指ジョイントを含めるか
-cmds.rowLayout("V_ControllerCheckBoxFingerRow", numberOfColumns=2)
-cmds.text("V_ControllerIsFinger_Blank", label="　　　", align='left')
-cmds.checkBox("V_ControllerIsFinger", label="指ジョイントを含める",  align='left', value=True)
-cmds.setParent("..")
-
 # ボタン
 cmds.separator(h=5)
 cmds.button("V_Controller_Button", label="コントローラーを作成", w=25, h=25, command=lambda *args:createController())
@@ -1075,8 +1053,8 @@ cmds.text("V_AddTimeEditor_Header_1", label="Add TimeEditor", h=20, font="boldLa
 cmds.text("V_AddTimeEditor_Header_2", label="アニメーションをタイムエディタに登録", h=20)
 cmds.separator(h=5)
 
-# アニメーションが存在するか取得
-cmds.button("V_collectAnimation_Button", label="アニメーション取得", w=25, h=25, command=lambda *args:collectAnimation())
+# タイムエディタを開く
+cmds.button("V_TimeEditor_Button", label="タイムエディタを開く", w=25, h=25, command=lambda *args:mel.eval("TimeEditorWindow;"))
 cmds.separator(h=5)
 
 # アニメーション名設定
@@ -1086,12 +1064,16 @@ cmds.text("V_AddTimeEditorName_Blank", label="　　", h=20, align='left')
 cmds.textField("V_AddTimeEditor_Name", text="Anim", w=100, h=20)
 cmds.setParent("..")
 
-# 初期姿勢に戻すか
-cmds.text("V_AddTimeEditorCheckBox_Text", label="　★出力設定", h=30, align='left')
+# 仮チェックボックス
+cmds.text("V_AddTimeEditorCheckBox_Text", label="　★仮設定", h=30, align='left')
 cmds.rowLayout("V_AddTimeEditorCheckBoxRootRow", numberOfColumns=2)
 cmds.text("V_AddTimeEditorCheckBox_Blank", label="　　", align='left')
-cmds.checkBox("V_AddTimeEditorIsBindPause", label="出力後に初期姿勢に戻す", align='left', value=True)
+cmds.checkBox("V_AddTimeEditorCheckBox", label="設定", align='left', value=True)
 cmds.setParent("..")
+
+# アニメーションが存在するか取得
+cmds.separator(h=5)
+cmds.button("V_collectAnimation_Button", label="アニメーション取得", w=25, h=25, command=lambda *args:collectAnimation())
 
 # タイムエディタに登録
 cmds.separator(h=5)
