@@ -394,7 +394,7 @@ def collectJoint():
             cmds.image(f"V_IsEnable{str(i)}",  edit=True, image="empty.png")
 
         # 部位 ; 実ジョイント名の表示
-        cmds.text(f"V_JointName{str(i)}", edit=True, label=g_Joints[i].name)
+        cmds.text(f"V_JointName{str(i)}_Text", edit=True, label=g_Joints[i].name)
 
     # ジョイントの正常数/総数を更新
     cmds.text("V_JointCount_Value", edit=True, label=f"　　{str(count)}/{str(len(g_Joints))}")
@@ -446,7 +446,7 @@ def createController():
         return
 
     # コントローラー半径を取得
-    radius = cmds.intSliderGrp("V_Controller_RadiusSlider", query=True, value=True)
+    radius = cmds.intSliderGrp("V_Controller_Radius_Slider", query=True, value=True)
 
     # 全ての主要ジョイントのコントローラーとグループを作成
     for i, name in enumerate(V_JOINTS):
@@ -747,7 +747,7 @@ def addTimeEditor():
         ctrls.append(g_ctrlGrp[i].curveName)
 
     # アニメーション名をコンポジションとトラックの名前にする
-    animName = cmds.textField("V_AddTimeEditor_Name", query=True, text=True)
+    animName = cmds.textField("V_AnimationName", query=True, text=True)
 
     try:
         # コンポジションが存在しなければ新規作成
@@ -845,7 +845,7 @@ cmds.separator(h=5)
 cmds.text("V_CollectJoint_Text", label="　★ジョイントを取得", h=20, align='left')
 
 # ジョイント数と判定結果を表示する
-cmds.rowLayout("V_JointRow" + str(i), numberOfColumns=2)
+cmds.rowLayout(f"V_JointCheck_Row{str(i)}", numberOfColumns=2)
 cmds.text("V_JointCount_Value", label=f"　　--/{str(len(g_Joints))}", h=30, align='left')
 cmds.text("V_JointCount_Message", label="　Joint Undefined", h=30, align='left')
 cmds.setParent("..")
@@ -858,7 +858,7 @@ cmds.columnLayout(adjustableColumn=True, rowSpacing=0)
 # ジョイント有無の判定結果を表示する領域
 # [アイコン]部位 : ジョイント名
 for i in range(len(g_Joints)):
-    cmds.rowLayout(f"V_JointRow{str(i)}", numberOfColumns=3)
+    cmds.rowLayout(f"V_Joint_Row{str(i)}", numberOfColumns=3)
     if g_Joints[i].enable == IsJoint(0):
         cmds.image(f"V_IsEnable{str(i)}", image="error.png")
     elif g_Joints[i].enable == IsJoint(1):
@@ -866,8 +866,8 @@ for i in range(len(g_Joints)):
     else:
         cmds.image(f"V_IsEnable{str(i)}", image="help.png")
 
-    cmds.text(f"V_JointKey{str(i)}", label=f"{g_Joints[i].jointKey} : ", h=16, align='left')
-    cmds.text(f"V_JointName{str(i)}", label=g_Joints[i].name, h=16, align='left')
+    cmds.text(f"V_JointKey{str(i)}_Text", label=f"{g_Joints[i].jointKey} : ", h=16, align='left')
+    cmds.text(f"V_JointName{str(i)}_Text", label=g_Joints[i].name, h=16, align='left')
     cmds.setParent("..")
 cmds.setParent("..")
 cmds.setParent("..")
@@ -875,6 +875,7 @@ cmds.setParent("..")
 # ボタン
 cmds.separator(h=5)
 cmds.button("V_CollectJoint_Button", label="ジョイントをチェック", w=25, h=25, command=lambda *args:collectJoint())
+cmds.separator(h=5)
 
 # ログ
 cmds.text("V_JointCheck_LogText", label="　★ログ", h=30, align='left')
@@ -901,20 +902,20 @@ cmds.text("V_CollectJoint_Text", label="　★コントローラー作成", h=20
 cmds.text("V_V_ControllerPreSuf_Text", label="　　☆オブジェクト先頭・末尾テキスト", h=30, align='left')
 
 # prefix
-cmds.rowLayout("V_ControllerPrefixRow", numberOfColumns=2)
+cmds.rowLayout("V_Controller_Prefix_Row", numberOfColumns=2)
 cmds.text("V_Controller_Prefix_Text", label="　　　Prefix : ", h=20, align='left')
 cmds.textField("V_Controller_Prefix", text="V_", w=100, h=20)
 cmds.setParent("..")
 
 # suffix
-cmds.rowLayout("V_ControllerSuffixRow", numberOfColumns=2)
+cmds.rowLayout("V_Controller_Suffix_Row", numberOfColumns=2)
 cmds.text("V_Controller_Suffix_Text", label="　　　Suffix : ", h=20, align='left')
 cmds.textField("V_Controller_Suffix", text="_Ctrl", w=100, h=20)
 cmds.setParent("..")
 
 # コントローラー半径を指定
 cmds.text("V_ControllerRadius_Text", label="　　☆コントローラー半径", h=30, align='left')
-cmds.intSliderGrp("V_Controller_RadiusSlider", label="　　　Radius : ", field=True, minValue=1, maxValue=10, value=1,
+cmds.intSliderGrp("V_Controller_Radius_Slider", label="　　　Radius : ", field=True, minValue=1, maxValue=10, value=1,
                 columnWidth3=[80, 100, 100], columnAlign3=["left", "left", "left"] )
 
 # ボタン
@@ -956,74 +957,74 @@ cmds.scrollLayout(h=500, childResizable=True)
 
 # センターラインのコントローラー群
 # 折り畳み可能なレイアウトにする
-cmds.frameLayout("V_SelectFrameCenter", label="Center", collapsable=True)
+cmds.frameLayout("V_Select_Frame_Center", label="Center", collapsable=True)
 # Root, Hips
-cmds.text("V_SelectCenter1", label="　★体幹", align='left')
+cmds.text("V_Select_Center_Text1", label="　★体幹", align='left')
 createSelectButton(num:= num + 1, idOffset, row:= 2)
 # Spine～UpperChest
-cmds.text("V_SelectCenter2", label="　★胴", align='left')
+cmds.text("V_Select_Center_Text2", label="　★胴", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 3)
 # Neck, Head
-cmds.text("V_SelectCenter3", label="　★頭部", align='left')
+cmds.text("V_Select_Center_Text3", label="　★頭部", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 cmds.setParent("..")
 
 # 肩～手首のコントローラー群
-cmds.frameLayout("V_SelectFrameUpperLimb", label="Upper Limb", collapsable=True)
+cmds.frameLayout("V_Select_Frame_UpperLimb", label="Upper Limb", collapsable=True)
 # Shoulder
-cmds.text("V_SelectUpperLimb1", label="　★肩", align='left')
+cmds.text("V_Select_UpperLimb_Text1", label="　★肩", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # UpperArm
-cmds.text("V_SelectUpperLimb2", label="　★上腕", align='left')
+cmds.text("V_Select_UpperLimb_Text2", label="　★上腕", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # LowerArm
-cmds.text("V_SelectUpperLimb3", label="　★下腕", align='left')
+cmds.text("V_Select_UpperLimb_Text3", label="　★下腕", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # Hand
-cmds.text("V_SelectUpperLimb4", label="　★手首", align='left')
+cmds.text("V_Select_UpperLimb_Text4", label="　★手首", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 cmds.setParent("..")
 
 # 下半身のコントローラー群
-cmds.frameLayout("V_SelectFrameLowerLimb", label="Lower Limb", collapsable=True)
+cmds.frameLayout("V_Select_Frame_LowerLimb", label="Lower Limb", collapsable=True)
 # UpperLeg
-cmds.text("V_SelectLowerLimb1", label="　★大腿", align='left')
+cmds.text("V_Select_LowerLimb_Text1", label="　★大腿", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # LowerLeg
-cmds.text("V_SelectLowerLimb2", label="　★下肢", align='left')
+cmds.text("V_Select_LowerLimb_Text2", label="　★下肢", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # Foot
-cmds.text("V_SelectLowerLimb3", label="　★足", align='left')
+cmds.text("V_Select_LowerLimb_Text3", label="　★足", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # Toes
-cmds.text("V_SelectLowerLimb4", label="　★爪先", align='left')
+cmds.text("V_Select_LowerLimb_Text4", label="　★爪先", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 cmds.setParent("..")
 
 # 指のコントローラー群
-cmds.frameLayout("V_SelectFrameFinger", label="Finger", collapsable=True)
+cmds.frameLayout("V_Select_Frame_Finger", label="Finger", collapsable=True)
 # Thumb
-cmds.text("V_SelectFinger1", label="　★親指", align='left')
+cmds.text("V_Select_Finger_Text1", label="　★親指", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # Index
-cmds.text("V_SelectFinger2", label="　★人差し指", align='left')
+cmds.text("V_Select_Finger_Text2", label="　★人差し指", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # Middle
-cmds.text("V_SelectFinger3", label="　★中指", align='left')
+cmds.text("V_Select_Finger_Text3", label="　★中指", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # Ring
-cmds.text("V_SelectFinger4", label="　★薬指", align='left')
+cmds.text("V_Select_Finger_Text4", label="　★薬指", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 # Little
-cmds.text("V_SelectFinger5", label="　★小指", align='left')
+cmds.text("V_Select_Finger_Text5", label="　★小指", align='left')
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
 createSelectButton(num:= num + 1, idOffset:= idOffset + row, row:= 2)
@@ -1058,26 +1059,22 @@ cmds.button("V_TimeEditor_Button", label="タイムエディタを開く", w=25,
 cmds.separator(h=5)
 
 # アニメーション名設定
-cmds.text("V_AddTimeEditorName_Text", label="　★アニメーション名入力", h=20, align='left')
-cmds.rowLayout("V_AddTimeEditorNameRow", numberOfColumns=2)
-cmds.text("V_AddTimeEditorName_Blank", label="　　", h=20, align='left')
-cmds.textField("V_AddTimeEditor_Name", text="Anim", w=100, h=20)
-cmds.setParent("..")
-
-# 仮チェックボックス
-cmds.text("V_AddTimeEditorCheckBox_Text", label="　★仮設定", h=30, align='left')
-cmds.rowLayout("V_AddTimeEditorCheckBoxRootRow", numberOfColumns=2)
-cmds.text("V_AddTimeEditorCheckBox_Blank", label="　　", align='left')
-cmds.checkBox("V_AddTimeEditorCheckBox", label="設定", align='left', value=True)
+cmds.text("V_AnimationName_Text", label="　★アニメーション名入力", h=20, align='left')
+cmds.rowLayout("V_AnimationName_Row", numberOfColumns=2)
+cmds.text("V_AnimationName_Blank", label="　　", h=20, align='left')
+cmds.textField("V_AnimationName", text="Anim", w=100, h=20)
 cmds.setParent("..")
 
 # アニメーションが存在するか取得
-cmds.separator(h=5)
-cmds.button("V_collectAnimation_Button", label="アニメーション取得", w=25, h=25, command=lambda *args:collectAnimation())
+cmds.text("V_CollectAnimation_Text", label="　★補助機能", h=20, align='left')
+cmds.rowLayout("V_CollectAnimation_Row", numberOfColumns=2)
+cmds.text("V_CollectAnimation_Blank", label="　　", h=20, align='left')
+cmds.button("V_CollectAnimation_Button", label="アニメーション取得", w=100, h=25, command=lambda *args:collectAnimation())
+cmds.setParent("..")
 
 # タイムエディタに登録
 cmds.separator(h=5)
-cmds.button("V_AddTimeEditor_Button", label="タイムエディタに登録", w=25, h=25, command=lambda *args:addTimeEditor())
+cmds.button("V_AddTimeEditor_Button", label="アニメーションをタイムエディタに登録", w=25, h=25, command=lambda *args:addTimeEditor())
 
 # ログ
 cmds.text("V_AddTimeEditor_LogText", label="　★ログ", h=30, align='left')
