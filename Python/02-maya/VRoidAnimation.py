@@ -362,6 +362,21 @@ if V_SelectJobID_2 and cmds.scriptJob(exists=V_SelectJobID_2):
 # 補助関数定義
 # --------------------
 # --------------------
+# コントローラー取得
+# --------------------
+def getController():
+    # 全コントローラーを取得し、リストを返す
+    ctrls = []
+    for i in range(len(g_ctrlGrp)):
+        ctrl = g_ctrlGrp[i].curveName
+        if not cmds.objExists(ctrl):
+            continue
+        else:
+            ctrls.append(g_ctrlGrp[i].curveName)
+
+    return ctrls
+
+# --------------------
 # ジョイントの有無を判定
 # --------------------
 def collectJoint():
@@ -640,7 +655,14 @@ def selectController(str):
 
     # 今選択されているオブジェクトを出力
     sel = cmds.ls(selection=True)
-    addLog(f"選択中 : {sel}", "V_Select_Log")
+    addLog(f"Log : Select {sel}", "V_Select_Log")
+
+# --------------------
+# 全ての選択をクリア
+# --------------------
+def clearSel():
+    cmds.select(clear=True)
+    addLog("Log : 全ての選択を解除しました", "V_Select_Log")
 
 # --------------------
 # コントローラー再接続
@@ -714,7 +736,7 @@ def collectAnimation():
 
         # コントローラー自体が存在しない場合は弾く
         if not cmds.objExists(ctrl):
-            addLog(f"Error : コントローラーが作成されていません\n[CTRL作成]タブからコントローラーを作成してください", "V_AddTimeEditor_Log")
+            addLog(f"Error : コントローラーが作成されていません\n[CTRL作成]タブからコントローラーを作成してください", "V_AnimManager_Log")
             return
 
         # キーフレーム取得
@@ -726,11 +748,25 @@ def collectAnimation():
 
     # ログ出力
     if len(animCtrls) > 0:
-        addLog(f"Result : アニメーションが存在\n{animCtrls}", "V_AddTimeEditor_Log")
+        addLog(f"Result : アニメーションが存在\n{animCtrls}", "V_AnimManager_Log")
         return True
     else:
-        addLog(f"Result : アニメーションが存在しません", "V_AddTimeEditor_Log")
+        addLog(f"Result : アニメーションが存在しません", "V_AnimManager_Log")
         return False
+
+# --------------------
+# コントローラーを初期姿勢に戻す
+# --------------------
+def initPause():
+    # 全コントローラーを取得
+    ctrls = getController()
+
+    for ctrl in ctrls:
+        cmds.setAttr(f"{ctrl}.rotateX", 0)
+        cmds.setAttr(f"{ctrl}.rotateY", 0)
+        cmds.setAttr(f"{ctrl}.rotateZ", 0)
+
+    addLog("Result : コントローラー回転値を初期姿勢にリセットしました", "V_AnimManager_Log")
 
 # --------------------
 # コントローラーをタイムエディタに登録
@@ -738,26 +774,28 @@ def collectAnimation():
 def addTimeEditor():
     # コントローラーまたはキーが存在しない場合はそれ以上処理しない
     if not collectAnimation():
-        addLog("Error : アニメーションが存在しないため、処理がスキップされました", "V_AddTimeEditor_Log")
+        addLog("Error : アニメーションが存在しないため、処理がスキップされました", "V_AnimManager_Log")
+        return
+
+    # アニメーション名をコンポジションとトラックの名前にする
+    # 入力されていなければ弾く
+    animName = cmds.textField("V_AnimationName", query=True, text=True)
+    if not animName:
+        addLog("Error : アニメーション名が入力されていません", "V_AnimManager_Log")
         return
 
     # 全コントローラーを取得
-    ctrls = []
-    for i in range(len(g_ctrlGrp)):
-        ctrls.append(g_ctrlGrp[i].curveName)
-
-    # アニメーション名をコンポジションとトラックの名前にする
-    animName = cmds.textField("V_AnimationName", query=True, text=True)
+    ctrls = getController()
 
     try:
         # コンポジションが存在しなければ新規作成
         comps = cmds.timeEditorComposition(query=True, allCompositions=True) or []
         if animName in comps:
             cmds.timeEditorComposition(animName, edit=True, active=True)
-            addLog(f"Log : コンポジションを{animName}に切り替えました", "V_AddTimeEditor_Log")
+            addLog(f"Log : コンポジションを{animName}に切り替えました", "V_AnimManager_Log")
         else:
             cmds.timeEditorComposition(animName, active=True)
-            addLog(f"Log : コンポジション{animName}を新規作成しました", "V_AddTimeEditor_Log")
+            addLog(f"Log : コンポジション{animName}を新規作成しました", "V_AnimManager_Log")
 
         # アニメーショントラックを作成
         cmds.timeEditorTracks(animName, edit=True, addTrack=1, trackName=animName)
@@ -775,14 +813,44 @@ def addTimeEditor():
         # タイムエディタにアニメーションクリップを登録
         cmds.timeEditorClip(animName, addSelectedObjects=True, track=trackPath, startTime=start)
 
-        addLog(f"Success : クリップ{animName}をコンポジションに登録しました", "V_AddTimeEditor_Log")
-        return
+        addLog(f"Success : クリップ[{animName}]をコンポジションに登録しました", "V_AnimManager_Log")
+
+        # コンポジションを戻す設定の場合は現在のコンポジションを初期のComposition1に戻す
+        isInitComp = cmds.checkBox("V_AddTimeEditor_IsInitComp", query=True, value=True)
+
+        if isInitComp:
+            comps = cmds.timeEditorComposition(query=True, allCompositions=True) or []
+            if "Composition1" in comps:
+                cmds.timeEditorComposition("Composition1", edit=True, active=True)
+            else:
+                cmds.timeEditorComposition("Composition1", active=True)
+                return
+
+        # 初期姿勢に戻す
+        isInitPause = cmds.checkBox("V_AddTimeEditor_IsInitPause", query=True, value=True)
+
+        if isInitPause:
+            initPause()
+
+        # アクティブなコンポジションをログ出力
+        activeComp = cmds.timeEditorComposition(query=True, active=True)
+        addLog(f"Log : Active Composition [{activeComp}]", "V_AnimManager_Log")
+
     except Exception as e:
-        addLog(f"Error : コンポジションへの登録に失敗しました\n{str(e)}", "V_AddTimeEditor_Log")
+        addLog(f"Error : コンポジションへの登録に失敗しました\n{str(e)}", "V_AnimManager_Log")
         return
+
     finally:
         # 最後に選択を全て解除する
         cmds.select(clear=True)
+
+def openGameExporter():
+    # ゲームエクスポータのプラグインとスクリプトをロード
+    if not cmds.pluginInfo('gameFbxExporter', query=True, loaded=True):
+        cmds.loadPlugin('gameFbxExporter')
+
+    # ゲームエクスポータを開く
+    mel.eval('gameFbxExporter;')
 
 # --------------------
 # マルチバイト文字を判定
@@ -810,6 +878,21 @@ def addLog(newText, logItem):
 # --------------------
 def logClear(logItem):
     cmds.scrollField(logItem, edit=True, text="")
+
+# --------------------
+# 初期化（ウィンドウ表示直後に呼ぶ）
+# --------------------
+def init():
+    global V_SelectJobID_1
+    global V_SelectJobID_2
+
+    # イベント登録
+    # 選択されたときおよび選択解除時に発火する
+    V_SelectJobID_1 = cmds.scriptJob(event=["SelectionChanged", updateSelectButton],  parent=window)
+    V_SelectJobID_2 = cmds.scriptJob(conditionFalse=["SomethingSelected", updateSelectButton], parent=window)
+
+    # 初期化処理
+    updateSelectButton()
 
 # --------------------
 # ウィンドウ定義
@@ -842,7 +925,7 @@ cmds.text("V_JointCheck_Header_2", label="VRoidの主要ジョイントの有無
 cmds.separator(h=5)
 
 # 見出しテキスト
-cmds.text("V_CollectJoint_Text", label="　★ジョイントを取得", h=20, align='left')
+cmds.text("V_CollectJoint_Text", label="　★ジョイントを取得", h=30, align='left')
 
 # ジョイント数と判定結果を表示する
 cmds.rowLayout(f"V_JointCheck_Row{str(i)}", numberOfColumns=2)
@@ -898,7 +981,7 @@ cmds.text("V_Controller_Header_2", label="VRoidジョイントにコントロー
 cmds.separator(h=5)
 
 # コントローラー名のprefixとsuffixの入力
-cmds.text("V_CollectJoint_Text", label="　★コントローラー作成", h=20, align='left')
+cmds.text("V_CollectJoint_Text", label="　★コントローラー作成", h=30, align='left')
 cmds.text("V_V_ControllerPreSuf_Text", label="　　☆オブジェクト先頭・末尾テキスト", h=30, align='left')
 
 # prefix
@@ -921,6 +1004,7 @@ cmds.intSliderGrp("V_Controller_Radius_Slider", label="　　　Radius : ", fiel
 # ボタン
 cmds.separator(h=5)
 cmds.button("V_Controller_Button", label="コントローラーを作成", w=25, h=25, command=lambda *args:createController())
+cmds.separator(h=5)
 
 # ログ
 cmds.text("V_Controller_LogText", label="　★ログ", h=30, align='left')
@@ -943,7 +1027,7 @@ cmds.text("V_Select_Header_2", label="コントローラーの選択状態を制
 cmds.separator(h=5)
 
 # 選択解除
-cmds.button("V_SelectClear_Button", label="全ての選択を解除", h=25, command=lambda *args:cmds.select(clear=True))
+cmds.button("V_SelectClear_Button", label="全ての選択を解除", h=25, command=lambda *args:clearSel())
 cmds.separator(h=5)
 
 # createSelectButtonに引数として渡すID,要素数,開始配列番号
@@ -1043,15 +1127,15 @@ cmds.button("V_Select_LogClear", label="ログをクリア", h=25, command=lambd
 cmds.setParent("..")
 
 # --------------------
-# タイムエディタにアニメーションを登録
+# アニメーションの管理
 # --------------------
 # レイアウトを作成してタブに挿入
-cmds.columnLayout("V_AddTimeEditor", adjustableColumn=True)
-cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_AddTimeEditor", u"TE登録")])
+cmds.columnLayout("V_AnimManager", adjustableColumn=True)
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_AnimManager", u"アニメーション管理")])
 
 # ヘッダテキスト
-cmds.text("V_AddTimeEditor_Header_1", label="Add TimeEditor", h=20, font="boldLabelFont")
-cmds.text("V_AddTimeEditor_Header_2", label="アニメーションをタイムエディタに登録", h=20)
+cmds.text("V_AnimManager_Header_1", label="Animation Manager", h=20, font="boldLabelFont")
+cmds.text("V_AnimManager_Header_2", label="アニメーションの管理とタイムエディタ登録", h=20)
 cmds.separator(h=5)
 
 # タイムエディタを開く
@@ -1059,43 +1143,71 @@ cmds.button("V_TimeEditor_Button", label="タイムエディタを開く", w=25,
 cmds.separator(h=5)
 
 # アニメーション名設定
-cmds.text("V_AnimationName_Text", label="　★アニメーション名入力", h=20, align='left')
+cmds.text("V_AnimationName_Text", label="　★アニメーション名入力", h=30, align='left')
 cmds.rowLayout("V_AnimationName_Row", numberOfColumns=2)
 cmds.text("V_AnimationName_Blank", label="　　", h=20, align='left')
-cmds.textField("V_AnimationName", text="Anim", w=100, h=20)
+cmds.textField("V_AnimationName", text="", w=100, h=20)
 cmds.setParent("..")
 
 # アニメーションが存在するか取得
-cmds.text("V_CollectAnimation_Text", label="　★補助機能", h=20, align='left')
+cmds.text("V_Module_Text", label="　★補助機能", h=30, align='left')
 cmds.rowLayout("V_CollectAnimation_Row", numberOfColumns=2)
 cmds.text("V_CollectAnimation_Blank", label="　　", h=20, align='left')
 cmds.button("V_CollectAnimation_Button", label="アニメーション取得", w=100, h=25, command=lambda *args:collectAnimation())
 cmds.setParent("..")
 
+# 初期姿勢に戻す
+cmds.rowLayout("V_InitPause_Row", numberOfColumns=2)
+cmds.text("V_InitPause_Blank", label="　　", h=20, align='left')
+cmds.button("V_InitPause_Button", label="初期姿勢に戻す", w=100, h=25, command=lambda *args:initPause())
+cmds.setParent("..")
+
+# タイムエディタ出力時の設定
+# 初期姿勢に戻すか
+cmds.text("V_AddTimeEditor_Setting_Text", label="　★タイムエディタ出力後の処理", h=30, align='left')
+cmds.rowLayout("V_AddTimeEditor_IsInitPause_Row", numberOfColumns=2)
+cmds.text("V_AddTimeEditor_IsInitPause_Blank", label="　　", align='left')
+cmds.checkBox("V_AddTimeEditor_IsInitPause", label="初期姿勢に戻す", align='left', value=True)
+cmds.setParent("..")
+
+# 初期コンポジションに戻すか
+cmds.rowLayout("V_AddTimeEditor_IsInitComp_Row", numberOfColumns=2)
+cmds.text("V_AddTimeEditor_IsInitComp_Blank", label="　　", align='left')
+cmds.checkBox("V_AddTimeEditor_IsInitComp", label="初期コンポジションをアクティブにする", align='left', value=True)
+cmds.setParent("..")
+
 # タイムエディタに登録
 cmds.separator(h=5)
 cmds.button("V_AddTimeEditor_Button", label="アニメーションをタイムエディタに登録", w=25, h=25, command=lambda *args:addTimeEditor())
+cmds.separator(h=5)
 
 # ログ
-cmds.text("V_AddTimeEditor_LogText", label="　★ログ", h=30, align='left')
-cmds.scrollField("V_AddTimeEditor_Log", text="", h=60, editable=False)
-cmds.button("V_AddTimeEditor_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_AddTimeEditor_Log"))
+cmds.text("V_AnimManager_LogText", label="　★ログ", h=30, align='left')
+cmds.scrollField("V_AnimManager_Log", text="", h=60, editable=False)
+cmds.button("V_AnimManager_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_AnimManager_Log"))
 
 # レイアウトから出る
 cmds.setParent("..")
 
 # --------------------
-# UIを表示する
+# 出力設定
+# --------------------
+# レイアウトを作成してタブに挿入
+cmds.columnLayout("V_ExportSetting", adjustableColumn=True)
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_ExportSetting", u"出力設定")])
+
+# ヘッダテキスト
+cmds.text("V_ExportSetting_Header_1", label="Export Setting", h=20, font="boldLabelFont")
+cmds.text("V_ExportSetting_Header_2", label="ゲームエクスポータの出力設定", h=20)
+cmds.separator(h=5)
+
+# ゲームエクスポータを開く
+cmds.button("V_Export_Button", label="ゲームエクスポータを開く", w=25, h=25, command=lambda *args:openGameExporter())
+cmds.separator(h=5)
+
+# --------------------
+# UI表示・初期化
 # --------------------
 cmds.setParent("..")
 cmds.showWindow(window)
-
-# --------------------
-# イベント登録・初期化処理
-# --------------------
-# 選択されたときおよび選択解除時に発火する
-V_SelectJobID_1 = cmds.scriptJob(event=["SelectionChanged", updateSelectButton],  parent=window)
-V_SelectJobID_2 = cmds.scriptJob(conditionFalse=["SomethingSelected", updateSelectButton], parent=window)
-
-# 起動時に初期化する
-updateSelectButton()
+init()
