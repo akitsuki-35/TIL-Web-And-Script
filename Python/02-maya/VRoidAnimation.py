@@ -2,13 +2,15 @@
     # file    : VRoidAnimation.py
     # brief   : VRoidモデルのアニメーション制作補助
     # author  : @akitsuki-35（https://github.com/akitsuki-35）
-    # date    : 2026/11/03
-    # updated : 2026/11/03
+    # date    : 2026/11/04
+    # updated : 2026/11/04
 #===========================================================
 import maya.cmds as cmds
 import maya.mel as mel
 from enum import Enum
 from dataclasses import dataclass
+import csv
+import os
 
 ### VRoidモデルのジョイントチェック・コントローラー作成等のアニメーション補助機能を提供します
 ### ジョイント名はVRMエクスポート時のデフォルト名を前提としています
@@ -597,6 +599,116 @@ def isFingerJoint(str):
     return False
 
 # --------------------
+# チェックボックス状態に応じてソケット作成
+# --------------------
+def createSocket():
+    settings = []
+    settings.append(cmds.checkBox("V_Socket_IsLeftHand", query=True, value=True))
+    settings.append(cmds.checkBox("V_Socket_IsRightHand", query=True, value=True))
+    settings.append(cmds.checkBox("V_Socket_IsChest", query=True, value=True))
+
+    if not any(settings):
+        addLog(f"Error : チェックが入っている部位がないため、ソケットが作成されませんでした", "V_Socket_Log")
+
+    # prefixとsuffixを取得
+    prefix = cmds.textField("V_Socket_Prefix", query=True, text=True)
+    suffix = cmds.textField("V_Socket_Suffix", query=True, text=True)
+
+    # ソケットを作成
+    for i in range(len(settings)):
+        match i:
+            case 0:
+                addSocket(f"{prefix}L_Hand{suffix}", JOINT_L_HAND)
+            case 1:
+                addSocket(f"{prefix}R_Hand{suffix}", JOINT_R_HAND)
+            case 2:
+                addSocket(f"{prefix}Chest{suffix}", JOINT_CHEST)
+
+
+# --------------------
+# ソケット作成処理
+# --------------------
+def addSocket(str, parent):
+    # 親ジョイントが存在しない場合は弾く
+    if not cmds.objExists(parent):
+        addLog(f"Error : [{parent}]が存在しません", "V_Socket_Log")
+        return
+
+    # 指定ソケットが既に存在する場合は弾く
+    if cmds.objExists(str):
+        addLog(f"Error : ソケット[{str}]は既に作成されています", "V_Socket_Log")
+        return
+
+    # ソケットとなるロケータを作成
+    socket = cmds.spaceLocator(name=str)[0]
+    cmds.parent(socket, parent, relative=True)
+
+    # 座標と回転を0にする
+    cmds.setAttr(f"{socket}.translate", 0, 0, 0, type="double3")
+    cmds.setAttr(f"{socket}.rotate", 0, 0, 0, type="double3")
+    cmds.setAttr(f"{socket}.scale", 1, 1, 1, type="double3")
+
+    # ソケットを選択状態にする
+    cmds.select(socket, replace=True)
+
+    addLog(f"Success : Create Success [{str}]", "V_Socket_Log")
+
+# --------------------
+# ソケットをCSV出力
+# --------------------
+def exportSockets():
+    # 選択中のオブジェクトを取得
+    sel = cmds.ls(selection=True, type="transform") or []
+
+    if not sel:
+        addLog("Error : 選択されているオブジェクトがありません", "V_Socket_Log")
+        return
+
+    # ロケータが選択されているか確認
+    socket = sel[0]
+    locator = cmds.listRelatives(socket, shapes=True, type="locator") or []
+
+    if not locator:
+        addLog(f"Error : [{socket}]はLocatorではありません", "V_Socket_Log")
+        return
+
+    # 親ジョイントを取得
+    parents = cmds.listRelatives(socket, parent=True, type="joint") or []
+
+    if not parents:
+        addLog(f"Error : ソケット[{socket}]に親ジョイントがありません", "V_Socket_Log")
+        return
+
+    parent = parents[0]
+
+    # 親ジョイント基準のローカル位置・回転を取得
+    position = cmds.getAttr(f"{socket}.translate")[0]
+    rotation = cmds.getAttr(f"{socket}.rotate")[0]
+
+    # 出力先フォルダ選択
+    Paths = cmds.fileDialog2(fileMode=0, dialogStyle=2, fileFilter="CSV Files (*.csv)", caption="ソケット情報をCSV出力")
+    if not Paths:
+        return
+
+    # ソケット名をファイル名にする
+    filePath = Paths[0]
+
+    # .CSVがない場合は追加する
+    if not filePath.lower().endswith(".csv"):
+        filePath += ".csv"
+
+    # CSV出力
+    with open(filePath, "w", newline="", encoding="utf-8-sig") as file:
+        writer = csv.writer(file)
+
+        writer.writerow(["Name", socket])
+        writer.writerow(["Parent", parent])
+        writer.writerow(["Position", position[0], position[1], position[2]])
+        writer.writerow(["Rotation", rotation[0], rotation[1], rotation[2]])
+
+    addLog(f"Success : ソケット[{socket}]の出力に成功しました", "V_Socket_Log")
+
+# --------------------
 # コントローラー選択ボタンUIの作成
 # 引数：UIのID, ボタン数, ループを開始する配列番号
 # --------------------
@@ -757,7 +869,7 @@ def collectAnimation():
 # --------------------
 # コントローラーを初期姿勢に戻す
 # --------------------
-def initPause():
+def initPause(log):
     # 全コントローラーを取得
     ctrls = getController()
 
@@ -766,7 +878,7 @@ def initPause():
         cmds.setAttr(f"{ctrl}.rotateY", 0)
         cmds.setAttr(f"{ctrl}.rotateZ", 0)
 
-    addLog("Result : コントローラー回転値を初期姿勢にリセットしました", "V_AnimManager_Log")
+    addLog("Result : コントローラー回転値を初期姿勢にリセットしました", log)
 
 # --------------------
 # コントローラーをタイムエディタに登録
@@ -792,10 +904,19 @@ def addTimeEditor():
         comps = cmds.timeEditorComposition(query=True, allCompositions=True) or []
         if animName in comps:
             cmds.timeEditorComposition(animName, edit=True, active=True)
-            addLog(f"Log : コンポジションを{animName}に切り替えました", "V_AnimManager_Log")
+            addLog(f"Log : コンポジションを[{animName}]に切り替えました", "V_AnimManager_Log")
         else:
             cmds.timeEditorComposition(animName, active=True)
-            addLog(f"Log : コンポジション{animName}を新規作成しました", "V_AnimManager_Log")
+            addLog(f"Log : コンポジション[{animName}]を新規作成しました", "V_AnimManager_Log")
+
+        # コンポジションに同名アニメーションが既に登録されている場合は弾く
+        clips = cmds.timeEditor(allClips='') or []
+        for clip in clips:
+            clipName = cmds.timeEditorClip(clip, query=True, name=True)
+
+            if animName == clipName:
+                addLog(f"Error : クリップ[{animName}]は既に作成されています", "V_AnimManager_Log")
+                return
 
         # アニメーショントラックを作成
         cmds.timeEditorTracks(animName, edit=True, addTrack=1, trackName=animName)
@@ -812,23 +933,10 @@ def addTimeEditor():
 
         # タイムエディタにアニメーションクリップを登録
         cmds.timeEditorClip(animName, addSelectedObjects=True, track=trackPath, startTime=start)
-
         addLog(f"Success : クリップ[{animName}]をコンポジションに登録しました", "V_AnimManager_Log")
-
-        # コンポジションを戻す設定の場合は現在のコンポジションを初期のComposition1に戻す
-        isInitComp = cmds.checkBox("V_AddTimeEditor_IsInitComp", query=True, value=True)
-
-        if isInitComp:
-            comps = cmds.timeEditorComposition(query=True, allCompositions=True) or []
-            if "Composition1" in comps:
-                cmds.timeEditorComposition("Composition1", edit=True, active=True)
-            else:
-                cmds.timeEditorComposition("Composition1", active=True)
-                return
 
         # 初期姿勢に戻す
         isInitPause = cmds.checkBox("V_AddTimeEditor_IsInitPause", query=True, value=True)
-
         if isInitPause:
             initPause()
 
@@ -836,14 +944,27 @@ def addTimeEditor():
         activeComp = cmds.timeEditorComposition(query=True, active=True)
         addLog(f"Log : Active Composition [{activeComp}]", "V_AnimManager_Log")
 
+    # エラーメッセージ
     except Exception as e:
         addLog(f"Error : コンポジションへの登録に失敗しました\n{str(e)}", "V_AnimManager_Log")
         return
 
     finally:
+        # コンポジションを戻す設定の場合は現在のコンポジションを初期のComposition1に戻す
+        isInitComp = cmds.checkBox("V_AddTimeEditor_IsInitComp", query=True, value=True)
+        if isInitComp:
+            comps = cmds.timeEditorComposition(query=True, allCompositions=True) or []
+            if "Composition1" in comps:
+                cmds.timeEditorComposition("Composition1", edit=True, active=True)
+            else:
+                cmds.timeEditorComposition("Composition1", active=True)
+
         # 最後に選択を全て解除する
         cmds.select(clear=True)
 
+# --------------------
+# ゲームエクスポータを開く
+# --------------------
 def openGameExporter():
     # ゲームエクスポータのプラグインとスクリプトをロード
     if not cmds.pluginInfo('gameFbxExporter', query=True, loaded=True):
@@ -851,6 +972,27 @@ def openGameExporter():
 
     # ゲームエクスポータを開く
     mel.eval('gameFbxExporter;')
+
+# --------------------
+# ジョイント選択
+# --------------------
+def selectJoints():
+    # 現在の選択を全て解除
+    cmds.select(clear=True)
+
+    # VRoidの実ジョイントを取得
+    joints = []
+    for i in range(len(g_ctrlGrp)):
+        joint = g_ctrlGrp[i].jointName
+        if not cmds.objExists(joint):
+            continue
+        else:
+            joints.append(g_ctrlGrp[i].jointName)
+
+    # ジョイントを選択
+    if len(joints) > 1:
+        cmds.select(joints)
+        addLog(f"Success : 全ジョイントを選択しました", "V_AnimManager_Log")
 
 # --------------------
 # マルチバイト文字を判定
@@ -982,7 +1124,7 @@ cmds.separator(h=5)
 
 # コントローラー名のprefixとsuffixの入力
 cmds.text("V_CollectJoint_Text", label="　★コントローラー作成", h=30, align='left')
-cmds.text("V_V_ControllerPreSuf_Text", label="　　☆オブジェクト先頭・末尾テキスト", h=30, align='left')
+cmds.text("V_ControllerPreSuf_Text", label="　　☆オブジェクト先頭・末尾テキスト", h=30, align='left')
 
 # prefix
 cmds.rowLayout("V_Controller_Prefix_Row", numberOfColumns=2)
@@ -1015,6 +1157,62 @@ cmds.button("V_Controller_LogClear", label="ログをクリア", h=25, command=l
 cmds.setParent("..")
 
 # --------------------
+# ソケット作成
+# --------------------
+# レイアウトを作成してタブに挿入
+cmds.columnLayout("V_Socket", adjustableColumn=True)
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_Socket", u"ソケット作成")])
+
+# ヘッダテキスト
+cmds.text("V_Socket_Header_1", label="Create Socket", h=20, font="boldLabelFont")
+cmds.text("V_Socket_Header_2", label=".アクセサリー用ソケットを追加", h=20)
+cmds.separator(h=5)
+
+# ソケット名のprefixとsuffixの入力
+cmds.text("V_Socket_Text", label="　★ソケット作成", h=30, align='left')
+cmds.text("V_SocketPreSuf_Text", label="　　☆オブジェクト先頭・末尾テキスト", h=30, align='left')
+
+# prefix
+cmds.rowLayout("V_Socket_Prefix_Row", numberOfColumns=2)
+cmds.text("V_Socket_Prefix_Text", label="　　　Prefix : ", h=20, align='left')
+cmds.textField("V_Socket_Prefix", text="V_", w=100, h=20)
+cmds.setParent("..")
+
+# suffix
+cmds.rowLayout("V_Socket_Suffix_Row", numberOfColumns=2)
+cmds.text("V_Socket_Suffix_Text", label="　　　Suffix : ", h=20, align='left')
+cmds.textField("V_Socket_Suffix", text="_Socket", w=100, h=20)
+cmds.setParent("..")
+
+# ソケット作成部位の設定
+cmds.text("V_Socket_Setting_Text", label="　　☆ソケット作成部位指定", h=30, align='left')
+cmds.rowLayout("V_Socket_IsHand_Row", numberOfColumns=4)
+cmds.text("V_Socket_IsHand_Blank", label="　　　", align='left')
+cmds.checkBox("V_Socket_IsLeftHand", label="L_Hand　", align='left', value=True)
+cmds.checkBox("V_Socket_IsRightHand", label="R_Hand　", align='left', value=True)
+cmds.checkBox("V_Socket_IsChest", label="Chest", align='left', value=True)
+cmds.setParent("..")
+
+# 作成
+cmds.separator(h=5)
+cmds.button("V_Socket_Button", label="ソケットを作成", w=25, h=25, command=lambda *args:createSocket())
+cmds.separator(h=5)
+
+# 出力
+cmds.text("V_Socket_Export_Text", label="　★CSV出力", h=30, align='left')
+cmds.separator(h=5)
+cmds.button("V_Socket_Export_Button", label="選択ソケットをCSV出力", w=25, h=25, command=lambda *args:exportSockets())
+cmds.separator(h=5)
+
+# ログ
+cmds.text("V_Socket_LogText", label="　★ログ", h=30, align='left')
+cmds.scrollField("V_Socket_Log", text="", h=60, editable=False)
+cmds.button("V_Socket_LogClear", label="ログをクリア", h=25, command=lambda *args:logClear("V_Socket_Log"))
+
+# レイアウトから出る
+cmds.setParent("..")
+
+# --------------------
 # コントローラーの選択状態を制御
 # --------------------
 # レイアウトを作成してタブに挿入
@@ -1028,6 +1226,8 @@ cmds.separator(h=5)
 
 # 選択解除
 cmds.button("V_SelectClear_Button", label="全ての選択を解除", h=25, command=lambda *args:clearSel())
+cmds.separator(h=5)
+cmds.button("V_InitPauseSel_Button", label="初期姿勢に戻す", w=100, h=25, command=lambda *args:initPause("V_Select_Log"))
 cmds.separator(h=5)
 
 # createSelectButtonに引数として渡すID,要素数,開始配列番号
@@ -1131,11 +1331,11 @@ cmds.setParent("..")
 # --------------------
 # レイアウトを作成してタブに挿入
 cmds.columnLayout("V_AnimManager", adjustableColumn=True)
-cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_AnimManager", u"アニメーション管理")])
+cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_AnimManager", u"アニメーション")])
 
 # ヘッダテキスト
 cmds.text("V_AnimManager_Header_1", label="Animation Manager", h=20, font="boldLabelFont")
-cmds.text("V_AnimManager_Header_2", label="アニメーションの管理とタイムエディタ登録", h=20)
+cmds.text("V_AnimManager_Header_2", label="アニメーションの管理", h=20)
 cmds.separator(h=5)
 
 # タイムエディタを開く
@@ -1159,7 +1359,7 @@ cmds.setParent("..")
 # 初期姿勢に戻す
 cmds.rowLayout("V_InitPause_Row", numberOfColumns=2)
 cmds.text("V_InitPause_Blank", label="　　", h=20, align='left')
-cmds.button("V_InitPause_Button", label="初期姿勢に戻す", w=100, h=25, command=lambda *args:initPause())
+cmds.button("V_InitPause_Button", label="初期姿勢に戻す", w=100, h=25, command=lambda *args:initPause("V_AnimManager_Log"))
 cmds.setParent("..")
 
 # タイムエディタ出力時の設定
@@ -1181,6 +1381,18 @@ cmds.separator(h=5)
 cmds.button("V_AddTimeEditor_Button", label="アニメーションをタイムエディタに登録", w=25, h=25, command=lambda *args:addTimeEditor())
 cmds.separator(h=5)
 
+# ジョイント全選択
+cmds.text("V_AnimExport_Text", label="　★出力", h=30, align='left')
+cmds.rowLayout("V_JointSel_Row", numberOfColumns=2)
+cmds.text("V_JointSel_Blank", label="　　", h=20, align='left')
+cmds.button("V_JointSel_Button", label="ジョイント全選択", w=100, h=25, command=lambda *args:selectJoints())
+cmds.setParent("..")
+cmds.separator(h=5)
+
+# ゲームエクスポータを開く
+cmds.button("V_Exporter_Button", label="ゲームエクスポータを開く", w=25, h=25, command=lambda *args:openGameExporter())
+cmds.separator(h=5)
+
 # ログ
 cmds.text("V_AnimManager_LogText", label="　★ログ", h=30, align='left')
 cmds.scrollField("V_AnimManager_Log", text="", h=60, editable=False)
@@ -1188,22 +1400,6 @@ cmds.button("V_AnimManager_LogClear", label="ログをクリア", h=25, command=
 
 # レイアウトから出る
 cmds.setParent("..")
-
-# --------------------
-# 出力設定
-# --------------------
-# レイアウトを作成してタブに挿入
-cmds.columnLayout("V_ExportSetting", adjustableColumn=True)
-cmds.tabLayout("V_ToolTab", edit=True, tabLabel=[("V_ExportSetting", u"出力設定")])
-
-# ヘッダテキスト
-cmds.text("V_ExportSetting_Header_1", label="Export Setting", h=20, font="boldLabelFont")
-cmds.text("V_ExportSetting_Header_2", label="ゲームエクスポータの出力設定", h=20)
-cmds.separator(h=5)
-
-# ゲームエクスポータを開く
-cmds.button("V_Export_Button", label="ゲームエクスポータを開く", w=25, h=25, command=lambda *args:openGameExporter())
-cmds.separator(h=5)
 
 # --------------------
 # UI表示・初期化
