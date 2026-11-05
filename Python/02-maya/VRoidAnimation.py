@@ -881,6 +881,91 @@ def initPause(log):
     addLog("Result : コントローラー回転値を初期姿勢にリセットしました", log)
 
 # --------------------
+# 指定アニメーションの最終姿勢にする
+# --------------------
+def clipEndPose():
+    name = cmds.textField("V_ClipPause_Name", query=True, text=True)
+
+    # 名前が入力されていなければ弾く
+    if not name:
+        addLog(f"Error : 対象のアニメーション名が入力されていません", "V_AnimManager_Log")
+        return
+
+    # 同名コンポジションが存在するか取得
+    compos = cmds.timeEditorComposition(query=True, allCompositions=True) or []
+    if name not in compos:
+        addLog(f"Error : コンポジション[{name}]が存在しません", "V_AnimManager_Log")
+        return
+
+    # 同名コンポジションをアクティブにする
+    cmds.timeEditorComposition(name, edit=True, active=True)
+
+    # クリップを検索
+    clipId = None
+    clips = cmds.timeEditor(allClips="") or []
+
+    for clip in clips:
+        clipName = cmds.timeEditorClip(clip, query=True, name=True)
+        if clipName == name:
+            clipId = clip
+            break
+
+    if clipId is None:
+        addLog(f"Error : クリップ[{name}]が存在しません", "V_AnimManager_Log")
+        return
+
+    try:
+        # クリップの終了時間を取得
+        endTime = cmds.timeEditorClip(clipId, query=True, endTime=True)
+
+        # 終了時間へ移動
+        cmds.currentTime(endTime, edit=True)
+        cmds.refresh(force=True)
+
+        poseData = {}
+
+        # コントローラー取得
+        ctrls = getController()
+
+        # コントローラーの姿勢を取得
+        for ctrl in ctrls:
+            if not cmds.objExists(ctrl):
+                continue
+
+            poseData[ctrl] = [
+                cmds.getAttr(f"{ctrl}.rotateX"),
+                cmds.getAttr(f"{ctrl}.rotateY"),
+                cmds.getAttr(f"{ctrl}.rotateZ")
+            ]
+
+        # コンポジションを戻す
+        comps = cmds.timeEditorComposition(query=True, allCompositions=True) or []
+        if "Composition1" in comps:
+            cmds.timeEditorComposition("Composition1", edit=True, active=True)
+        else:
+            cmds.timeEditorComposition("Composition1", active=True)
+        cmds.refresh(force=True)
+
+        for ctrl in ctrls:
+            if ctrl not in poseData:
+                continue
+
+            rotate = poseData[ctrl]
+            cmds.setAttr(f"{ctrl}.rotateX", rotate[0])
+            cmds.setAttr(f"{ctrl}.rotateY", rotate[1])
+            cmds.setAttr(f"{ctrl}.rotateZ", rotate[2])
+
+        addLog("Result : 指定クリップの最終姿勢をコントローラーに反映しました", "V_AnimManager_Log")
+
+    except Exception as e:
+        addLog(f"Error : 最終姿勢の取得に失敗しました\n{str(e)}", "V_AnimManager_Log")
+        return
+
+    finally:
+        # 最後に選択を全て解除する
+        cmds.select(clear=True)
+
+# --------------------
 # コントローラーをタイムエディタに登録
 # --------------------
 def addTimeEditor():
@@ -891,7 +976,7 @@ def addTimeEditor():
 
     # アニメーション名をコンポジションとトラックの名前にする
     # 入力されていなければ弾く
-    animName = cmds.textField("V_AnimationName", query=True, text=True)
+    animName = cmds.textField("V_Animation_Name", query=True, text=True)
     if not animName:
         addLog("Error : アニメーション名が入力されていません", "V_AnimManager_Log")
         return
@@ -1346,7 +1431,7 @@ cmds.separator(h=5)
 cmds.text("V_AnimationName_Text", label="　★アニメーション名入力", h=30, align='left')
 cmds.rowLayout("V_AnimationName_Row", numberOfColumns=2)
 cmds.text("V_AnimationName_Blank", label="　　", h=20, align='left')
-cmds.textField("V_AnimationName", text="", w=100, h=20)
+cmds.textField("V_Animation_Name", text="", w=100, h=20)
 cmds.setParent("..")
 
 # アニメーションが存在するか取得
@@ -1360,6 +1445,14 @@ cmds.setParent("..")
 cmds.rowLayout("V_InitPause_Row", numberOfColumns=2)
 cmds.text("V_InitPause_Blank", label="　　", h=20, align='left')
 cmds.button("V_InitPause_Button", label="初期姿勢に戻す", w=100, h=25, command=lambda *args:initPause("V_AnimManager_Log"))
+cmds.setParent("..")
+
+# 指定アニメーションの最終姿勢にする
+cmds.text("V_ClipPause_Text", label="　　☆指定アニメーションの最終姿勢にする", h=30, align='left')
+cmds.rowLayout("V_ClipPause_Row", numberOfColumns=3)
+cmds.text("V_ClipPause_Blank", label="　　　", h=20, align='left')
+cmds.textField("V_ClipPause_Name", text="", w=100, h=20)
+cmds.button("V_ClipPause_Button", label="ポーズ取得", w=70, h=20, command=lambda *args:clipEndPose())
 cmds.setParent("..")
 
 # タイムエディタ出力時の設定
