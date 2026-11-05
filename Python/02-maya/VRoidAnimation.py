@@ -778,6 +778,19 @@ def clearSel():
     addLog("Log : 全ての選択を解除しました", "V_Select_Log")
 
 # --------------------
+# コントローラーを全選択
+# --------------------
+def allControllerSel():
+    ctrls = getController()
+
+    if not ctrls:
+        addLog("Error : コントローラーが作成されていません\n[CTRL作成]タブからコントローラーを作成してください", "V_Select_Log")
+        return
+
+    cmds.select(ctrls)
+    addLog("Log : 全てのコントローラーを選択しました", "V_Select_Log")
+
+# --------------------
 # コントローラー再接続
 # --------------------
 def reconnectController(nurbs):
@@ -870,7 +883,7 @@ def collectAnimation():
 # --------------------
 # コントローラーを初期姿勢に戻す
 # --------------------
-def initPause(log):
+def initPause():
     # 全コントローラーを取得
     ctrls = getController()
 
@@ -879,7 +892,7 @@ def initPause(log):
         cmds.setAttr(f"{ctrl}.rotateY", 0)
         cmds.setAttr(f"{ctrl}.rotateZ", 0)
 
-    addLog("Result : コントローラー回転値を初期姿勢にリセットしました", log)
+    addLog("Result : コントローラー回転値を初期姿勢にリセットしました", "V_AnimManager_Log")
 
 # --------------------
 # 指定アニメーションの最終姿勢にする
@@ -1313,7 +1326,9 @@ cmds.separator(h=5)
 # 選択解除
 cmds.button("V_SelectClear_Button", label="全ての選択を解除", h=25, command=lambda *args:clearSel())
 cmds.separator(h=5)
-cmds.button("V_InitPauseSel_Button", label="初期姿勢に戻す", w=100, h=25, command=lambda *args:initPause("V_Select_Log"))
+
+# 全選択
+cmds.button("V_InitPauseSel_Button", label="全コントローラー選択", w=100, h=25, command=lambda *args:allControllerSel())
 cmds.separator(h=5)
 
 # createSelectButtonに引数として渡すID,要素数,開始配列番号
@@ -1445,7 +1460,7 @@ cmds.setParent("..")
 # 初期姿勢に戻す
 cmds.rowLayout("V_InitPause_Row", numberOfColumns=2)
 cmds.text("V_InitPause_Blank", label="　　", h=20, align='left')
-cmds.button("V_InitPause_Button", label="初期姿勢に戻す", w=100, h=25, command=lambda *args:initPause("V_AnimManager_Log"))
+cmds.button("V_InitPause_Button", label="初期姿勢に戻す", w=100, h=25, command=lambda *args:initPause())
 cmds.setParent("..")
 
 # 指定アニメーションの最終姿勢にする
