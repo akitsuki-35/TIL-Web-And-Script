@@ -1132,7 +1132,7 @@ if cmds.window(windowID, exists=True):
 
 # サイズを固定
 window = cmds.window(windowID, title="VRoid Animation", sizeable=False)
-cmds.window(window, edit=True, widthHeight=(500, 750))
+cmds.window(window, edit=True, widthHeight=(450, 750))
 
 # --------------------
 # ツールをタブ切り替えに対応
