@@ -2,8 +2,8 @@
     # file    : VRoidAnimation.py
     # brief   : VRoidモデルのアニメーション制作補助
     # author  : @akitsuki-35（https://github.com/akitsuki-35）
-    # date    : 2026/11/04
-    # updated : 2026/11/04
+    # date    : 2026/11/05
+    # updated : 2026/11/05
 #===========================================================
 import maya.cmds as cmds
 import maya.mel as mel
