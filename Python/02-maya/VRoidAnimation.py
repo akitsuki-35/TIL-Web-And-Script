@@ -3,7 +3,7 @@
     # brief   : VRoidモデルのアニメーション制作補助
     # author  : @akitsuki-35（https://github.com/akitsuki-35）
     # date    : 2026/11/05
-    # updated : 2026/11/05
+    # updated : 2026/11/06
 #===========================================================
 import maya.cmds as cmds
 import maya.mel as mel
@@ -616,13 +616,14 @@ def createSocket():
 
     # ソケットを作成
     for i in range(len(settings)):
-        match i:
-            case 0:
-                addSocket(f"{prefix}L_Hand{suffix}", JOINT_L_HAND)
-            case 1:
-                addSocket(f"{prefix}R_Hand{suffix}", JOINT_R_HAND)
-            case 2:
-                addSocket(f"{prefix}Chest{suffix}", JOINT_CHEST)
+        if settings[i]:
+            match i:
+                case 0:
+                    addSocket(f"{prefix}L_Hand{suffix}", JOINT_L_HAND)
+                case 1:
+                    addSocket(f"{prefix}R_Hand{suffix}", JOINT_R_HAND)
+                case 2:
+                    addSocket(f"{prefix}Chest{suffix}", JOINT_CHEST)
 
 
 # --------------------
