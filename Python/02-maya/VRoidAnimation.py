@@ -3,14 +3,13 @@
     # brief   : VRoidモデルのアニメーション制作補助
     # author  : @akitsuki-35（https://github.com/akitsuki-35）
     # date    : 2026/11/05
-    # updated : 2026/11/07
+    # updated : 2026/11/08
 #===========================================================
 import maya.cmds as cmds
 import maya.mel as mel
 from enum import Enum
 from dataclasses import dataclass
 import csv
-import os
 
 ### VRoidモデルのジョイントチェック・コントローラー作成等のアニメーション補助機能を提供します
 ### ジョイント名はVRMエクスポート時のデフォルト名を前提としています
