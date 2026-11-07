@@ -3,7 +3,7 @@
     # brief   : VRoidモデルのアニメーション制作補助
     # author  : @akitsuki-35（https://github.com/akitsuki-35）
     # date    : 2026/11/05
-    # updated : 2026/11/06
+    # updated : 2026/11/07
 #===========================================================
 import maya.cmds as cmds
 import maya.mel as mel
@@ -490,6 +490,10 @@ def createController():
             # コントローラーからジョイントへ回転を伝える
             cmds.orientConstraint(ctrl, joint, maintainOffset=False)
 
+            # Rootのみ移動も反映する
+            if name == JOINT_ROOT:
+                cmds.pointConstraint(ctrl, joint, maintainOffset=False)
+
             # g_ctrlGrpテーブルに格納し、親子関係構築で使用
             g_ctrlGrp[i].curveName = itemName
             g_ctrlGrp[i].jointKey = KEY_NAMES[i]
@@ -758,13 +762,15 @@ def selectController(str):
 
     # ctrlキー・Shiftキーが押されている場合は追加選択し、既に選択されているなら選択解除する
     # アウトライナ上と同様の操作感にする
-    cmds.select(ctrl, add=isCtrlShiftPressed, deselect=isSel)
-
-    # ログ出力
-    if not isSel:
-        addLog(f"Success : [{ctrl}]を選択しました", "V_Select_Log")
+    if isCtrlShiftPressed:
+        cmds.select(ctrl, add=isCtrlShiftPressed, deselect=isSel)
+        if not isSel:
+            addLog(f"Success : [{ctrl}]を選択しました", "V_Select_Log")
+        else:
+            addLog(f"Success : [{ctrl}]の選択を解除しました", "V_Select_Log")
     else:
-        addLog(f"Success : [{ctrl}]の選択を解除しました", "V_Select_Log")
+        cmds.select(ctrl)
+        addLog(f"Success : [{ctrl}]を選択しました", "V_Select_Log")
 
     # 今選択されているオブジェクトを出力
     sel = cmds.ls(selection=True)
